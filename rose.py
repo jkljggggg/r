@@ -64,14 +64,14 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     loading_messages = [
         "💖 𝐋", "💖 𝐋𝐨", "💖 𝐋𝐨𝐚", "💖 𝐋𝐨𝐚𝐝", "💖 𝐋𝐨𝐚𝐝𝐢", "💖 𝐋𝐨𝐚𝐝𝐢𝐧", "💖 𝐋𝐨𝐚𝐝𝐢𝐧𝐠",
         "💖 𝐋𝐨𝐚𝐝𝐢𝐧𝐠. ⏳", "💖 𝐋𝐨𝐚𝐝𝐢𝐧𝐠.. ⌛", "💖 𝐋𝐨𝐚𝐝𝐢𝐧𝐠... 💫", "💖 𝐋𝐨𝐚𝐝𝐢𝐧𝐠.... ✨",
-        "💫 𝐋𝐨𝐚𝐝 होत है, 𝐘𝐚𝐫!  تھوڑا صبروا राखअ... 🧐", 
+        "💫 𝐋𝐨𝐚𝐝 होत है, 𝐘𝐚𝐫!  तھوڑا صبروا राखअ... 🧐", 
         "✨ 𝐒𝐚𝐛 𝐣𝐚𝐝𝐮 𝐜𝐡𝐚𝐥 𝐫𝐚𝐡𝐚 𝐡𝐚𝐢, 💎 रउआ इंतज़ार करीं ज़रा... 🕰️", 
         "🎀 𝐓𝐚𝐢𝐲𝐚𝐫𝐢 𝐛𝐡𝐚𝐫𝐩𝐨𝐨𝐫 𝐜𝐡𝐚𝐥 𝐫𝐚𝐡𝐢 𝐡𝐚𝐢, 🍫 बाबू... 🚀",
         "💅 𝐒𝐚𝐛 𝐞𝐤 𝐝𝐚𝐦 𝐅𝐢𝐭 𝐤𝐚𝐫 𝐫𝐚𝐡𝐞 𝐡𝐚𝐢𝐧, 😎 बस आ ही गइनी... ✅", 
         "💖 𝐇𝐨 𝐠𝐚𝐢𝐥, 𝐘𝐚𝐫! 💯 𝐉𝐚𝐥𝐝𝐢 𝐚𝐚𝐲𝐞𝐧𝐠𝐞, 𝐑𝐨𝐜𝐤 𝐤𝐚𝐫𝐧𝐞... 🎶"
     ]
     
-    lols = await update.message.reply_text("💖 𝐒𝐡𝐮𝐫𝐮 𝐤𝐚𝐫 𝐫𝐚𝐡େ 𝐡𝐚𝐢𝐧, 𝐘𝐚𝐫! 🚀")
+    lols = await update.message.reply_text("💖 𝐒𝐡𝐮𝐫𝐮 𝐤𝐚𝐫 𝐫𝐚𝐡𝐞 𝐡𝐚𝐢𝐧, 𝐘𝐚𝐫! 🚀")
     for text in loading_messages:
         await lols.edit_text(f"**{text}**", parse_mode="Markdown")
         await asyncio.sleep(0.18) # Slightly increased sleep for better readability
@@ -111,6 +111,8 @@ async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
   /neo - 𝐁𝐨𝐭 𝐤𝐞 𝐛𝐚𝐚𝐫𝐞 𝐦𝐞𝐢𝐧 𝐣𝐚𝐧𝐚. 🤖
   /ping - 𝐁𝐨𝐭 𝐤𝐞 𝐜𝐡𝐚𝐥𝐚𝐧𝐞 𝐤𝐞 𝐬𝐩𝐞𝐞𝐝 𝐝𝐞𝐤𝐡𝐚. 🚀
   /donate - 𝐏𝐚𝐢𝐬𝐚-𝐤𝐚𝐮𝐝𝐢 𝐝𝐞𝐧𝐚 𝐡𝐚𝐢 𝐭𝐨𝐡 𝐢𝐝𝐡𝐚𝐫 𝐚𝐚𝐨. 💸
+  /id - 𝐆𝐫𝐨𝐮𝐩 𝐚𝐮𝐫 𝐚𝐩𝐧𝐚 𝐔𝐬𝐞𝐫 𝐈𝐃 𝐝𝐞𝐤𝐡𝐚. 🆔
+  /stickerid - 𝐖𝐞𝐥𝐜𝐨𝐦𝐞 𝐚𝐮𝐫 𝐋𝐞𝐚𝐯𝐞 𝐬𝐭𝐢𝐜𝐤𝐞𝐫 𝐤𝐢 𝐈𝐃 𝐝𝐞𝐤𝐡𝐚. 🖼️
 
 💖 *𝐌𝐨𝐝𝐞𝐫𝐚𝐭𝐢𝐨𝐧* (💬 𝐑𝐞𝐩𝐥𝐲 𝐤𝐚𝐫 𝐤𝐞 𝐔𝐬𝐞𝐫 𝐤𝐞 𝐛𝐚𝐭𝐚𝐨 𝐲𝐚 𝐩𝐡𝐢𝐫 🆔 𝐔𝐬𝐞𝐫 𝐈𝐃 𝐝𝐞 𝐝𝐨):
   /warn <user id> - 𝐂𝐡𝐞𝐭𝐚𝐰𝐚𝐧𝐢 𝐝𝐨. ⚠️
@@ -446,6 +448,30 @@ async def cleanservice(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         await update.message.reply_text("🤦‍♀️ 𝐆𝐚𝐥𝐚𝐭 𝐛𝐚𝐚𝐭 𝐛𝐨𝐥𝐚𝐭 𝐡𝐨, 𝐏𝐲𝐚𝐚𝐫𝐞. '𝐨𝐧' 𝐲𝐚 '𝐨𝐟𝐟' 𝐛𝐨𝐥. 🎀 𝐒𝐚𝐦𝐚𝐣𝐡 𝐧𝐚𝐡𝐢 𝐚𝐚𝐭𝐚 𝐤𝐢 𝐤𝐲𝐚? 🙄")
 
+# --- New Command: /id ---
+async def get_ids(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat_id = update.effective_chat.id
+    user_id = update.effective_user.id
+    
+    response_text = (
+        f"🆔 *𝐈𝐃 𝐝𝐞𝐤𝐡𝐨, 𝐌𝐚𝐡𝐚𝐫𝐚𝐣!* 🆔\n\n"
+        f"• ✨ *𝐆𝐫𝐨𝐮𝐩 𝐈𝐃:* `{chat_id}`\n"
+        f"• 💖 *𝐓𝐨𝐡𝐚𝐫𝐚 𝐔𝐬𝐞𝐫 𝐈𝐃:* `{user_id}`\n\n"
+        f"𝐄 𝐥𝐨, 𝐚𝐩𝐧𝐚 𝐩𝐚𝐡𝐜𝐡𝐚𝐧 𝐣𝐚𝐚𝐧 𝐥𝐢𝐲𝐨! 😎"
+    )
+    await update.message.reply_text(response_text, parse_mode="Markdown")
+
+# --- New Command: /stickerid ---
+async def get_sticker_ids(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    response_text = (
+        f"🖼️ *𝐒𝐭𝐢𝐜𝐤𝐞𝐫 𝐈𝐃𝐬 𝐝𝐞𝐤𝐡𝐚, 𝐘𝐚𝐫!* 🖼️\n\n"
+        f"• 💖 *𝐉𝐨𝐢𝐧 𝐒𝐭𝐢𝐜𝐤𝐞𝐫 𝐈𝐃:* `{JOIN_STICKER_ID}`\n"
+        f"• 💔 *𝐋𝐞𝐚𝐯𝐞 𝐒𝐭𝐢𝐜𝐤𝐞𝐫 𝐈𝐃:* `{LEAVE_STICKER_ID}`\n\n"
+        f"𝐄 𝐥𝐨, 𝐭𝐨𝐡𝐚𝐫𝐚 𝐩𝐚𝐬𝐚𝐧𝐝𝐢𝐝𝐚 𝐬𝐭𝐢𝐜𝐤𝐞𝐫 𝐤𝐢 𝐈𝐃𝐬! ✨"
+    )
+    await update.message.reply_text(response_text, parse_mode="Markdown")
+
+
 # --- New Member Handler ---
 async def new_member(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not welcome_enabled:
@@ -566,6 +592,9 @@ async def main():
     app.add_handler(CommandHandler("neo", neo))
     app.add_handler(CommandHandler("ping", ping))
     app.add_handler(CommandHandler("donate", donate))
+    app.add_handler(CommandHandler("id", get_ids))  # New: /id command
+    app.add_handler(CommandHandler("stickerid", get_sticker_ids)) # New: /stickerid command
+
 
     # Member join/leave handlers
     app.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, new_member))
