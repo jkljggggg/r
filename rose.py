@@ -7,12 +7,7 @@ import time
 import sys
 import logging
 from datetime import datetime
-
-from telegram import Update, ChatPermissions
-from telegram.ext import (
-    ApplicationBuilder, CommandHandler, MessageHandler,
-    ContextTypes, filters
-)
+import subprocess # For executing shell commands (git pull)
 
 # Enable logging to see bot activities on console
 logging.basicConfig(
@@ -21,9 +16,15 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+from telegram import Update, ChatPermissions
+from telegram.ext import (
+    ApplicationBuilder, CommandHandler, MessageHandler,
+    ContextTypes, filters
+)
+
 # --- Configuration ---
 TOKEN = "7608118862:AAHp8Zy8zsQpdx-7zktErHv4N0wBzj8MdrA"  # Replace with your actual token
-OWNER = "@rajaraj909"
+OWNER = "@rajaraj909" # Bot ka owner username
 warn_limit = 3
 warns = {}
 banlink_enabled = True
@@ -39,6 +40,13 @@ JOIN_STICKER_ID = "CAACAgIAAxkBAAIC3mWZ7WvQzQe5F2l3b3sQ2M1d4QABfQACaQMAAm2YgUrpL
 LEAVE_STICKER_ID = "CAACAgIAAxkBAAIC4WWZ7XCz1e-x_b2p5I3S1Q1j5QABfQACbgMAAm2YgUtjK7t1e6dONzQE" # Example ID, replace this
 START_ANIMATION_STICKER_ID = "CAACAgIAAxkBAAIC6WWZ7fO04r-O9cWwQv4Q3M1d4QABfQACcgMAAm2YgUs-J3t0AAGx-zc0BA" # Example ID, replace this
 START_FINAL_STICKER_ID = "CAACAgIAAxkBAAIC7WWZ7g8_k_jL-fXwR0sQ3M1d4QABfQACdQMAAm2YgUsvI3t0AAGx-Tc0BA" # Example ID, replace this
+
+# --- Upstream Configuration (IMPORTANT: Apne hisaab se badlen) ---
+# GitHub repository ka URL jahaan aapka bot code hai
+UPSTREAM_REPO_URL = "https://github.com/jkljggggg/r" # ** CHANGE THIS **
+# Woh directory jahaan aapne bot ki files rakhi hain
+# Agar bot root directory mein hai, toh '.' use karein
+REPO_DIR = "." # ** CHANGE THIS to your bot's directory if it's not the current one **
 
 
 # --- Helper Function to Resolve Target User ID ---
@@ -66,7 +74,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     loading_messages = [
         "💖 𝐋", "💖 𝐋𝐨", "💖 𝐋𝐨𝐚", "💖 𝐋𝐨𝐚𝐝", "💖 𝐋𝐨𝐚𝐝𝐢", "💖 𝐋𝐨𝐚𝐝𝐢𝐧", "💖 𝐋𝐨𝐚𝐝𝐢𝐧𝐠",
         "💖 𝐋𝐨𝐚𝐝𝐢𝐧𝐠. ⏳", "💖 𝐋𝐨𝐚𝐝𝐢𝐧𝐠.. ⌛", "💖 𝐋𝐨𝐚𝐝𝐢𝐧𝐠... 💫", "💖 𝐋𝐨𝐚𝐝𝐢𝐧𝐠.... ✨",
-        "💫 𝐋𝐨𝐚𝐝 होत है, 𝐘𝐚𝐫!  तھوڑا صبروا राखअ... 🧐", 
+        "💫 𝐋𝐨𝐚𝐝 होत है, 𝐘𝐚𝐫!  تھوڑا صبروا राखअ... 🧐", 
         "✨ 𝐒𝐚𝐛 𝐣𝐚𝐝𝐮 𝐜𝐡𝐚𝐥 𝐫𝐚𝐡𝐚 𝐡𝐚𝐢, 💎 रउआ इंतज़ार करीं ज़रा... 🕰️", 
         "🎀 𝐓𝐚𝐢𝐲𝐚𝐫𝐢 𝐛𝐡𝐚𝐫𝐩𝐨𝐨𝐫 𝐜𝐡𝐚𝐥 𝐫𝐚𝐡𝐢 𝐡𝐚𝐢, 🍫 बाबू... 🚀",
         "💅 𝐒𝐚𝐛 𝐞𝐤 𝐝𝐚𝐦 𝐅𝐢𝐭 𝐤𝐚𝐫 𝐫𝐚𝐡𝐞 𝐡𝐚𝐢𝐧, 😎 बस आ ही गइनी... ✅", 
@@ -126,12 +134,13 @@ async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 💎 *𝐆𝐞𝐧𝐞𝐫𝐚𝐥 𝐁𝐚𝐚𝐭:*
   /start - 𝐀𝐩𝐧𝐞 𝐛𝐚𝐚𝐫𝐞 𝐦𝐞𝐢𝐧 𝐛𝐚𝐭𝐚𝐞𝐧𝐠𝐞 𝐚𝐮𝐫 𝐭𝐨𝐡𝐚𝐫𝐚 𝐬𝐰𝐚𝐠𝐚𝐭 𝐤𝐚𝐫𝐞𝐧ge. 👋
   /help - 𝐄 𝐬𝐚𝐛 𝐧𝐢𝐲𝐚𝐦 𝐚𝐮𝐫 𝐤𝐚𝐦𝐚𝐧𝐝𝐬 𝐝𝐞𝐤𝐡𝐚. 📜
-  /neo - 𝐁𝐨𝐭 𝐤𝐞 𝐛𝐚𝐚𝐫𝐞 𝐦𝐞𝐢𝐧 𝐣𝐚𝐧𝐚. 🤖
+  /ROSE - 𝐁𝐨𝐭 𝐤𝐞 𝐛𝐚𝐚𝐫𝐞 𝐦𝐞𝐢𝐧 𝐣𝐚𝐧𝐚. 🤖
   /ping - 𝐁𝐨𝐭 𝐤𝐞 𝐜𝐡𝐚𝐥𝐚𝐧𝐞 𝐤𝐞 𝐬𝐩𝐞𝐞𝐝 𝐝𝐞𝐤𝐡𝐚. 🚀
   /donate - 𝐏𝐚𝐢𝐬𝐚-𝐤𝐚𝐮𝐝𝐢 𝐝𝐞𝐧𝐚 𝐡𝐚𝐢 𝐭𝐨𝐡 𝐢𝐝𝐡𝐚𝐫 𝐚𝐚𝐨. 💸
   /id - 𝐆𝐫𝐨𝐮𝐩 𝐚𝐮𝐫 𝐚𝐩𝐧𝐚 𝐔𝐬𝐞𝐫 𝐈𝐃 𝐝𝐞𝐤𝐡𝐚. 🆔
   /stickerid - 𝐖𝐞𝐥𝐜𝐨𝐦𝐞 𝐚𝐮𝐫 𝐋𝐞𝐚𝐯𝐞 𝐬𝐭𝐢𝐜𝐤𝐞𝐫 𝐤𝐢 𝐈𝐃 𝐝𝐞𝐤𝐡𝐚. 🖼️
   /getstickerid - 𝐑𝐞𝐩𝐥𝐲 𝐤𝐚𝐫𝐨 𝐤𝐢𝐬𝐢 𝐬𝐭𝐢𝐜𝐤𝐞𝐫 𝐩𝐚𝐫 𝐮𝐬𝐤𝐚 𝐈𝐃 𝐩𝐚𝐚𝐧𝐞 𝐤𝐞 𝐥𝐢𝐲𝐞. 🌠
+  /update - 𝐁𝐨𝐭 𝐤𝐞 𝐜𝐨𝐝𝐞 𝐤𝐨 𝐥𝐚𝐭𝐞𝐬𝐭 𝐯𝐞𝐫𝐬𝐢𝐨𝐧 𝐩𝐚𝐫 𝐮𝐩𝐝𝐚𝐭𝐞 𝐤𝐚𝐫𝐨. 🔄
 
 💖 *𝐌𝐨𝐝𝐞𝐫𝐚𝐭𝐢𝐨𝐧* (💬 𝐑𝐞𝐩𝐥𝐲 𝐤𝐚𝐫 𝐤𝐞 𝐔𝐬𝐞𝐫 𝐤𝐞 𝐛𝐚𝐭𝐚𝐨 𝐲𝐚 𝐩𝐡𝐢𝐫 🆔 𝐔𝐬𝐞𝐫 𝐈𝐃 𝐝𝐞 𝐝𝐨):
   /warn <user id> - 𝐂𝐡𝐞𝐭𝐚𝐰𝐚𝐧𝐢 𝐝𝐨. ⚠️
@@ -153,8 +162,8 @@ async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
   /unlock [all|links|photos] - 𝐒𝐚𝐛 𝐤𝐡𝐨𝐥𝐨. 🔓
 
 🚫 *𝐅𝐚𝐥t𝐮 𝐒𝐚𝐧𝐝𝐞𝐬𝐡 𝐑𝐨𝐤𝐧𝐞 𝐖𝐚𝐥𝐚 (𝐒𝐩𝐚𝐦 𝐅𝐢𝐥𝐭𝐞𝐫):*
-  /banlink - 𝐋𝐢𝐧𝐤 𝐛𝐡𝐞𝐣𝐧𝐚 𝐛𝐚𝐧𝐝 𝐤𝐚𝐫𝐨 𝐲𝐚 𝐜𝐡𝐚𝐥𝐮 𝐤𝐚𝐫𝐨. 🔗
-  /blocklist <shabd> - 𝐘𝐞 𝐬𝐡𝐚𝐛𝐝 𝐥𝐢𝐬𝐭 𝐦𝐞𝐢𝐧 𝐝𝐚𝐚𝐥𝐨. 📝
+  /banlink [on|off] - 𝐋𝐢𝐧𝐤 𝐛𝐡𝐞𝐣𝐧𝐚 𝐛𝐚𝐧𝐝 𝐤𝐚𝐫𝐨 𝐲𝐚 𝐜𝐡𝐚𝐥𝐮 𝐤𝐚𝐫𝐨. 🔗
+  /blocklist [add|remove] <shabd> - 𝐘𝐞 𝐬𝐡𝐚𝐛𝐝 𝐥𝐢𝐬𝐭 𝐦𝐞𝐢𝐧 𝐝𝐚𝐚𝐥𝐨 𝐲𝐚 𝐡𝐚𝐭𝐚𝐨. 📝
   /blocklistmode <mute|ban> - 𝐊𝐚𝐚𝐦 𝐝𝐞𝐤𝐡𝐨 𝐦𝐮𝐭𝐞 𝐲𝐚 𝐛𝐚𝐧. ⚔️
 
 🌸 *𝐒𝐰𝐚𝐠𝐚𝐭 𝐊𝐚𝐫𝐞 𝐊𝐞 𝐒𝐲𝐬𝐭𝐞𝐦 (𝐖𝐞𝐥𝐜𝐨𝐦𝐞 𝐒𝐲𝐬𝐭𝐞𝐦):*
@@ -173,21 +182,21 @@ async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
   /pin - 𝐌𝐞𝐬𝐬𝐚𝐠𝐞 𝐩𝐢𝐧 𝐤𝐚𝐫𝐨. 📌
   /unpin - 𝐏𝐢𝐧 𝐤𝐢𝐲𝐚 𝐡𝐮𝐚 𝐦𝐞𝐬𝐬𝐚𝐠𝐞 𝐡𝐚𝐭𝐚𝐨. 📍
   /del - 𝐌𝐞𝐬𝐬𝐚𝐠𝐞 𝐦𝐢𝐭𝐚𝐨. ❌
-  /purge <sankhya> - 𝐁𝐚𝐡𝐮𝐭 𝐬𝐚𝐚𝐫𝐚 𝐦𝐞𝐬𝐬𝐚𝐠𝐞 𝐞𝐤 𝐛𝐚𝐚𝐫 𝐦𝐞𝐢𝐧 𝐦𝐢𝐭𝐚𝐨. 💥
+  /purge [count] - 𝐁𝐚𝐡𝐮𝐭 𝐬𝐚𝐚𝐫𝐚 𝐦𝐞𝐬𝐬𝐚𝐠𝐞 𝐦𝐢𝐭𝐚𝐨 (𝐑𝐞𝐩𝐥𝐲 𝐲𝐚 𝐜𝐨𝐮𝐧𝐭 𝐝𝐨). 💥
   /cleanservice [on|off] - 𝐒𝐞𝐫𝐯𝐢𝐜𝐞 𝐦𝐞𝐬𝐬𝐚𝐠𝐞 𝐬𝐚𝐚𝐟 𝐤𝐚𝐫𝐨. 🧹
 """
     await update.message.reply_text(command_list, parse_mode="Markdown")
 
 async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
     t1 = time.time()
-    msg = await update.message.reply_text("🏓 𝐏𝐢𝐧𝐠-𝐩𝐨𝐧𝐠 𝐤𝐡𝐞𝐥 𝐫𝐚𝐡𝐞 𝐡𝐚𝐢𝐧... 🎾")
+    msg = await update.message.reply_text("🏓 𝐏𝐢𝐧𝐠-𝐩𝐨𝐧𝐠 𝐤𝐡𝐞𝐥 𝐫𝐚𝐡େ 𝐡𝐚𝐢𝐧... 🎾")
     t2 = time.time()
     await msg.edit_text(f"🏓 𝐏𝐨𝐧𝐠: `{int((t2 - t1) * 1000)}ms` 💫 𝐁𝐚𝐡𝐮𝐭 𝐭𝐞𝐳, 𝐘𝐚𝐫! ⚡", parse_mode="Markdown")
 
 async def donate(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("💸 𝐇𝐮𝐦𝐤𝐞 𝐤𝐮𝐜𝐡 𝐩𝐚𝐢𝐬𝐚-𝐤𝐚𝐮𝐝𝐢 𝐝𝐞𝐛𝐚? 𝐈𝐝𝐡𝐚𝐫 𝐛𝐡𝐞𝐣𝐨: @NEOBLADE71 💖 𝐃𝐡𝐚𝐧𝐲𝐚𝐰𝐚𝐝! 🙏", parse_mode="Markdown")
+    await update.message.reply_text("💸 𝐇𝐮𝐦𝐤𝐞 𝐤𝐮𝐜𝐡 𝐩𝐚𝐢𝐬𝐚-𝐤𝐚𝐮𝐝𝐢 𝐝𝐞𝐛𝐚? 𝐈𝐝𝐡𝐚𝐫 𝐛𝐡𝐞𝐣𝐨: @RAJARAJ909 💖 𝐃𝐡𝐚𝐧𝐲𝐚𝐰𝐚𝐝! 🙏", parse_mode="Markdown")
 
-async def neo(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def ROSE(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(f"💠 *𝐇𝐮𝐦 𝐡𝐚𝐢𝐧 𝐑𝐨𝐬𝐞𝐁𝐨𝐭: 𝐄𝐡𝐢 𝐤𝐞 𝐛𝐚𝐚𝐫𝐞 𝐦𝐞𝐢𝐧 𝐛𝐚𝐚𝐭 𝐡𝐨 𝐫𝐚𝐡𝐚 𝐡𝐚𝐢* 🌟\n\n𝐁𝐚𝐧𝐚𝐰𝐚𝐥 𝐠𝐞𝐞𝐥 𝐛𝐚 {OWNER} 𝐤𝐞 𝐭𝐚𝐫𝐚𝐟 𝐬𝐞 ✨ 𝐋𝐞𝐠𝐞𝐧𝐝 𝐡𝐚𝐢 𝐡𝐮𝐦! 🏆", parse_mode="Markdown")
 
 # --- Moderation Commands ---
@@ -415,9 +424,9 @@ async def setwelcome(update: Update, context: ContextTypes.DEFAULT_TYPE):
     global welcome_msg
     if context.args:
         welcome_msg = " ".join(context.args)
-        await update.message.reply_text(f"✅ 𝐖𝐞𝐥𝐜𝐨𝐦𝐞 𝐦𝐞𝐬𝐬𝐚𝐠𝐞 𝐛𝐚𝐝𝐚𝐥 𝐝𝐞𝐞𝐧𝐢: `{welcome_msg}`. 𝐍𝐚𝐲𝐚 𝐬𝐚𝐧𝐝𝐞𝐬𝐡! ✨")
+        await update.message.reply_text(f"✅ 𝐖𝐞𝐥𝐜𝐨𝐦𝐞 𝐦𝐞𝐬𝐬𝐚𝐠𝐞 𝐛𝐚𝐝𝐚𝐥 𝐝𝐞𝐞𝐧𝐢: `{welcome_msg}`. 𝐍𝐚𝐲𝐚 𝐬𝐚𝐧𝐝𝐞𝐬𝐡! ✨", parse_mode="Markdown")
     else:
-        await update.message.reply_text(f"👋 𝐀𝐛𝐡𝐢 𝐤𝐞 𝐰𝐞𝐥𝐜𝐨𝐦𝐞 𝐦𝐞𝐬𝐬𝐚𝐠𝐞 𝐡𝐚𝐢: `{welcome_msg}`. 𝐍𝐚𝐲𝐚 𝐤𝐚 𝐥𝐢𝐤𝐡𝐚𝐢? ✍️")
+        await update.message.reply_text(f"👋 𝐀𝐛𝐡𝐢 𝐤𝐞 𝐰𝐞𝐥𝐜𝐨𝐦𝐞 𝐦𝐞𝐬𝐬𝐚𝐠𝐞 𝐡𝐚𝐢: `{welcome_msg}`. 𝐍𝐚𝐲𝐚 𝐤𝐚 𝐥𝐢𝐤𝐡𝐚𝐢? ✍️", parse_mode="Markdown")
 
 async def cleanwelcome(update: Update, context: ContextTypes.DEFAULT_TYPE):
     global welcome_msg
@@ -460,10 +469,13 @@ async def cleanrules(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # --- Message Tool Commands ---
 async def pin(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.message.reply_to_message:
-        await update.message.reply_to_message.pin()
-        await update.message.reply_text("📌 𝐌𝐞𝐬𝐬𝐚𝐠𝐞 𝐩𝐢𝐧 𝐤𝐚𝐫 𝐝𝐞𝐞𝐧𝐢. 𝐒𝐚𝐛𝐤𝐨 𝐝𝐢𝐤𝐡𝐞𝐠𝐚! ⬆️")
+        try:
+            await update.message.reply_to_message.pin()
+            await update.message.reply_text("📌 𝐌𝐞𝐬𝐬𝐚𝐠𝐞 𝐩𝐢𝐧 𝐤𝐚𝐫 𝐝𝐞𝐞𝐧𝐢. 𝐒𝐚𝐛𝐤𝐨 𝐝𝐢𝐤𝐡𝐞𝐠𝐚! ⬆️")
+        except Exception as e:
+            await update.message.reply_text(f"𝐌𝐞𝐬𝐬𝐚𝐠𝐞 𝐩𝐢𝐧 𝐧𝐚 𝐡𝐨 𝐩𝐚𝐲𝐚𝐥: {e} 😥 𝐊𝐮𝐜𝐡 𝐝𝐢𝐤𝐤𝐚𝐭 𝐛𝐚! 😔")
     else:
-        await update.message.reply_text("💬 𝐊𝐞𝐤𝐚 𝐩𝐢𝐧 𝐤𝐚𝐫𝐞 𝐤𝐞 𝐛𝐚? 𝐌𝐞𝐬𝐬𝐚𝐠𝐞 𝐩𝐚𝐫 𝐑𝐞𝐩𝐥𝐲 𝐤𝐚𝐫𝐨 𝐧𝐚! 👀")
+        await update.message.reply_text("💬 𝐊𝐞𝐤𝐚 𝐩𝐢𝐧 𝐤𝐚𝐫େ 𝐤𝐞 𝐛𝐚? 𝐌𝐞𝐬𝐬𝐚𝐠𝐞 𝐩𝐚𝐫 𝐑𝐞𝐩𝐥𝐲 𝐤𝐚𝐫𝐨 𝐧𝐚! 👀")
 
 async def unpin(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
@@ -496,7 +508,8 @@ async def purge(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # If replying to a message, delete from the replied message up to the current command
         start_message_id = update.message.reply_to_message.message_id
         end_message_id = update.message.message_id
-        for i in range(start_message_id, end_message_id + 1):
+        # Iterate backwards from current message to replied message for deletion
+        for i in range(end_message_id, start_message_id - 1, -1):
             messages_to_delete.append(i)
     elif context.args:
         try:
@@ -508,6 +521,7 @@ async def purge(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text("❌ 𝐒𝐚𝐡𝐢-𝐬𝐚𝐡𝐢 𝐧𝐮𝐦𝐛𝐞𝐫𝐰𝐚 𝐝𝐚𝐚𝐥, 𝐌𝐚𝐡𝐚𝐫𝐚𝐣. 💅")
             return
     else:
+        # This case should ideally not be reached due to the initial check
         await update.message.reply_text("𝐊𝐞𝐤𝐚𝐫𝐚 𝐦𝐞𝐬𝐬𝐚𝐠𝐞 𝐦𝐢𝐭𝐚𝐧𝐞 𝐤𝐞 𝐛𝐚? 𝐒𝐚𝐧𝐤𝐡𝐲𝐚 𝐛𝐚𝐭𝐚𝐨 𝐧𝐚 𝐲𝐚 𝐑𝐞𝐩𝐥𝐲 𝐤𝐚𝐫𝐨! 🧹")
         return
 
@@ -568,7 +582,7 @@ async def get_sticker_id_from_reply(update: Update, context: ContextTypes.DEFAUL
         sticker_id = update.message.reply_to_message.sticker.file_id
         await update.message.reply_text(f"🌠 𝐄 𝐬𝐭𝐢𝐜𝐤𝐞𝐫 𝐤𝐚 𝐈𝐃 𝐡𝐚𝐢: `{sticker_id}`. 𝐀𝐛 𝐢𝐬𝐞 𝐮𝐬𝐞 𝐤𝐚𝐫𝐨, 𝐘𝐚𝐫! ✨", parse_mode="Markdown")
     else:
-        await update.message.reply_text("🤦‍♀️ 𝐊𝐫𝐢𝐩𝐲𝐚 𝐤𝐢𝐬𝐢 𝐬𝐭𝐢𝐜𝐤𝐞𝐫 𝐩𝐚𝐫 𝐫𝐞𝐩𝐥𝐲 𝐤𝐚𝐫େ𝐢𝐧 𝐈𝐃 𝐩𝐚𝐚𝐧𝐞 𝐤𝐞 𝐥𝐢𝐲𝐞. 💌")
+        await update.message.reply_text("🤦‍♀️ 𝐊𝐫𝐢𝐩𝐲𝐚 𝐤𝐢𝐬𝐢 𝐬𝐭𝐢𝐜𝐤𝐞𝐫 𝐩𝐚𝐫 𝐫𝐞𝐩𝐥𝐲 𝐤𝐚𝐫𝐞𝐢𝐧 𝐈𝐃 𝐩𝐚𝐚𝐧𝐞 𝐤𝐞 𝐥𝐢𝐲𝐞. 💌")
 
 
 # --- New Member Handler ---
@@ -689,6 +703,40 @@ async def fallback_help(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.message.text and "help" in update.message.text.lower():
         await help_cmd(update, context)
 
+# --- Update Functionality ---
+async def update_bot(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    # Only owner can use this command
+    if update.effective_user.username != OWNER.lstrip('@'):
+        await update.message.reply_text("🚨 𝐀𝐫𝐞 𝐛𝐚𝐛𝐮, 𝐞 𝐤𝐚𝐦𝐚𝐧𝐝 𝐭𝐨𝐡 𝐛𝐚𝐬 𝐌𝐚𝐥𝐢𝐤 (𝐎𝐰𝐧𝐞𝐫) 𝐤𝐞 𝐥𝐢𝐲𝐞 𝐛𝐚! 🚫 𝐓𝐮𝐦𝐡𝐚𝐫𝐞 𝐥𝐢𝐲𝐞 𝐧𝐚𝐡𝐢! 🤷‍♀️")
+        return
+
+    await update.message.reply_text("🔄 𝐔𝐩𝐝𝐚𝐭𝐞 𝐬𝐡𝐮𝐫𝐮 𝐡𝐨 𝐫𝐚𝐡𝐚 𝐡𝐚𝐢... 𝐆𝐢𝐭𝐇𝐮𝐛 𝐬𝐞 𝐧𝐚𝐲𝐚 𝐜𝐨𝐝𝐞 𝐤𝐡𝐞𝐞𝐧𝐜𝐡 𝐫𝐚𝐡𝐞 𝐡𝐚𝐢𝐧! 🚀 𝐓𝐡𝐨𝐝𝐚 𝐬𝐚𝐛𝐚𝐫 𝐤𝐚𝐫𝐨! ⏳")
+    
+    try:
+        # PULL_COMMAND ko execute karein
+        process = subprocess.run(
+            ["git", "pull", UPSTREAM_REPO_URL], 
+            cwd=REPO_DIR, # Bot ki directory mein command chalao
+            capture_output=True, 
+            text=True, 
+            check=True
+        )
+        await update.message.reply_text(f"✅ 𝐔𝐩𝐝𝐚𝐭𝐞 𝐬𝐚𝐟𝐚𝐥 𝐡𝐨 𝐠𝐚𝐢𝐥! 𝐒𝐚𝐛 𝐧𝐚𝐲𝐚 𝐜𝐨𝐝𝐞 𝐚𝐚 𝐠𝐚𝐢𝐥! ✨\n\n`{process.stdout}`", parse_mode="Markdown")
+        await update.message.reply_text("🔄 𝐁𝐨𝐭 𝐚𝐛 𝐫𝐞𝐬𝐭𝐚𝐫𝐭 𝐡𝐨𝐠𝐚 𝐭𝐚𝐚𝐤𝐢 𝐧𝐚𝐲𝐚 𝐜𝐨𝐝𝐞 𝐜𝐡𝐚𝐥𝐮 𝐡𝐨 𝐬𝐚𝐤𝐞. 𝐓𝐡𝐨𝐝𝐢 𝐝𝐞𝐫 𝐦𝐞𝐢𝐧 𝐰𝐚𝐩𝐚𝐬 𝐚𝐚 𝐣𝐚𝐚𝐞𝐧𝐠𝐞! 💖")
+        
+        # Ek chhota delay takki message send ho sake, phir bot ko exit kar do
+        await asyncio.sleep(2)
+        sys.exit(0) # Bot ko exit kar dega, jisse system use restart kar sake
+
+    except subprocess.CalledProcessError as e:
+        await update.message.reply_text(f"❌ 𝐔𝐩𝐝𝐚𝐭𝐞 𝐧𝐚 𝐡𝐨 𝐩𝐚𝐲𝐚𝐥, 𝐌𝐚𝐡𝐚𝐫𝐚𝐣! 𝐊𝐮𝐜𝐡 𝐞𝐫𝐫𝐨𝐫 𝐛𝐚! 💔\n\n`{e.stderr}`", parse_mode="Markdown")
+        logger.error(f"Git pull failed: {e.stderr}")
+    except FileNotFoundError:
+        await update.message.reply_text("❌ 𝐘𝐚𝐫, '𝐠𝐢𝐭' 𝐜𝐨𝐦𝐦𝐚𝐧𝐝 𝐧𝐚𝐡𝐢 𝐦𝐢𝐥𝐚! 𝐒𝐞𝐫𝐯𝐞𝐫 𝐩𝐚𝐫 '𝐠𝐢𝐭' 𝐢𝐧𝐬𝐭𝐚𝐥𝐥 𝐤𝐚𝐫𝐨 𝐧𝐚! 🤦‍♀️")
+    except Exception as e:
+        await update.message.reply_text(f"❌ 𝐊𝐮𝐜𝐡 𝐚𝐮𝐫 𝐠𝐚𝐝𝐛𝐚𝐝 𝐡𝐨 𝐠𝐚𝐢𝐥: {e} 😥 𝐏𝐚𝐫𝐞𝐬𝐡𝐚𝐧𝐢 𝐡𝐚𝐢! 😔")
+
+
 # --- Main function to set up the bot ---
 async def main():
     # Build the application
@@ -697,13 +745,13 @@ async def main():
     # General commands
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("help", help_cmd))
-    app.add_handler(CommandHandler("neo", neo))
+    app.add_handler(CommandHandler("ROSE", ROSE)) # Renamed from /ROSE to /ROSE to match common practices, user can still use /ROSE if they want to.
     app.add_handler(CommandHandler("ping", ping))
     app.add_handler(CommandHandler("donate", donate))
     app.add_handler(CommandHandler("id", get_ids))
     app.add_handler(CommandHandler("stickerid", get_sticker_ids))
     app.add_handler(CommandHandler("getstickerid", get_sticker_id_from_reply, filters=filters.REPLY))
-
+    app.add_handler(CommandHandler("update", update_bot)) # New: /update command
 
     # Member join/leave handlers
     app.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, new_member))
@@ -771,11 +819,11 @@ if __name__ == "__main__":
         # Check if an event loop is already running, if not, create a new one
         try:
             loop = asyncio.get_running_loop()
+            loop.create_task(main())
         except RuntimeError:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-        
-        loop.run_until_complete(main())
+            new_loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(new_loop)
+            new_loop.run_until_complete(main())
     except KeyboardInterrupt:
         print("Bot stopped by user.", file=sys.stderr)
     except Exception as e:
