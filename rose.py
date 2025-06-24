@@ -22,8 +22,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # --- Configuration ---
-TOKEN = "7902720317:AAH-qV2E1qGHG95HG1wvZHgB2L18JD6O2g"  # Replace with your actual token
-OWNER = "@bhanuxyz2"
+TOKEN = "7608118862:AAHp8Zy8zsQpdx-7zktErHv4N0wBzj8MdrA"  # Replace with your actual token
+OWNER = "@rajaraj909"
 warn_limit = 3
 warns = {}
 banlink_enabled = True
@@ -37,6 +37,8 @@ rules_msg = "📜 Be respectful. No spam."
 # ** Sticker IDs (Replace with your actual sticker file IDs) **
 JOIN_STICKER_ID = "CAACAgIAAxkBAAIC3mWZ7WvQzQe5F2l3b3sQ2M1d4QABfQACaQMAAm2YgUrpL3z-X7u4NzQE" # Example ID, replace this
 LEAVE_STICKER_ID = "CAACAgIAAxkBAAIC4WWZ7XCz1e-x_b2p5I3S1Q1j5QABfQACbgMAAm2YgUtjK7t1e6dONzQE" # Example ID, replace this
+START_ANIMATION_STICKER_ID = "CAACAgIAAxkBAAIC6WWZ7fO04r-O9cWwQv4Q3M1d4QABfQACcgMAAm2YgUs-J3t0AAGx-zc0BA" # Example ID, replace this
+START_FINAL_STICKER_ID = "CAACAgIAAxkBAAIC7WWZ7g8_k_jL-fXwR0sQ3M1d4QABfQACdQMAAm2YgUsvI3t0AAGx-Tc0BA" # Example ID, replace this
 
 
 # --- Helper Function to Resolve Target User ID ---
@@ -72,6 +74,14 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
     
     lols = await update.message.reply_text("💖 𝐒𝐡𝐮𝐫𝐮 𝐤𝐚𝐫 𝐫𝐚𝐡𝐞 𝐡𝐚𝐢𝐧, 𝐘𝐚𝐫! 🚀")
+    
+    # Send start animation sticker if available
+    if START_ANIMATION_STICKER_ID:
+        try:
+            await context.bot.send_sticker(chat_id=update.effective_chat.id, sticker=START_ANIMATION_STICKER_ID)
+        except Exception as e:
+            logger.error(f"Error sending start animation sticker: {e}")
+
     for text in loading_messages:
         await lols.edit_text(f"**{text}**", parse_mode="Markdown")
         await asyncio.sleep(0.18) # Slightly increased sleep for better readability
@@ -101,18 +111,27 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         await update.message.reply_text(welcome_text, parse_mode="Markdown")
 
+    # Send final start sticker if available
+    if START_FINAL_STICKER_ID:
+        try:
+            await context.bot.send_sticker(chat_id=update.effective_chat.id, sticker=START_FINAL_STICKER_ID)
+        except Exception as e:
+            logger.error(f"Error sending final start sticker: {e}")
+
+
 async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     command_list = """
 🧠 💫 *𝐑𝐨𝐬𝐞𝐁𝐨𝐭 𝐤𝐞 𝐒𝐚𝐫𝐤𝐚𝐫𝐢 𝐍𝐢𝐲𝐚𝐦𝐰𝐚 𝐚𝐮𝐫 𝐊𝐚𝐦𝐚𝐧𝐝𝐬* 👑
 
 💎 *𝐆𝐞𝐧𝐞𝐫𝐚𝐥 𝐁𝐚𝐚𝐭:*
-  /start - 𝐀𝐩𝐧𝐞 𝐛𝐚𝐚𝐫𝐞 𝐦𝐞𝐢𝐧 𝐛𝐚𝐭𝐚𝐞𝐧𝐠𝐞 𝐚𝐮𝐫 𝐭𝐨𝐡𝐚𝐫𝐚 𝐬𝐰𝐚𝐠𝐚𝐭 𝐤𝐚𝐫𝐞𝐧𝐠𝐞. 👋
+  /start - 𝐀𝐩𝐧𝐞 𝐛𝐚𝐚𝐫𝐞 𝐦𝐞𝐢𝐧 𝐛𝐚𝐭𝐚𝐞𝐧𝐠𝐞 𝐚𝐮𝐫 𝐭𝐨𝐡𝐚𝐫𝐚 𝐬𝐰𝐚𝐠𝐚𝐭 𝐤𝐚𝐫𝐞𝐧ge. 👋
   /help - 𝐄 𝐬𝐚𝐛 𝐧𝐢𝐲𝐚𝐦 𝐚𝐮𝐫 𝐤𝐚𝐦𝐚𝐧𝐝𝐬 𝐝𝐞𝐤𝐡𝐚. 📜
   /neo - 𝐁𝐨𝐭 𝐤𝐞 𝐛𝐚𝐚𝐫𝐞 𝐦𝐞𝐢𝐧 𝐣𝐚𝐧𝐚. 🤖
   /ping - 𝐁𝐨𝐭 𝐤𝐞 𝐜𝐡𝐚𝐥𝐚𝐧𝐞 𝐤𝐞 𝐬𝐩𝐞𝐞𝐝 𝐝𝐞𝐤𝐡𝐚. 🚀
   /donate - 𝐏𝐚𝐢𝐬𝐚-𝐤𝐚𝐮𝐝𝐢 𝐝𝐞𝐧𝐚 𝐡𝐚𝐢 𝐭𝐨𝐡 𝐢𝐝𝐡𝐚𝐫 𝐚𝐚𝐨. 💸
   /id - 𝐆𝐫𝐨𝐮𝐩 𝐚𝐮𝐫 𝐚𝐩𝐧𝐚 𝐔𝐬𝐞𝐫 𝐈𝐃 𝐝𝐞𝐤𝐡𝐚. 🆔
   /stickerid - 𝐖𝐞𝐥𝐜𝐨𝐦𝐞 𝐚𝐮𝐫 𝐋𝐞𝐚𝐯𝐞 𝐬𝐭𝐢𝐜𝐤𝐞𝐫 𝐤𝐢 𝐈𝐃 𝐝𝐞𝐤𝐡𝐚. 🖼️
+  /getstickerid - 𝐑𝐞𝐩𝐥𝐲 𝐤𝐚𝐫𝐨 𝐤𝐢𝐬𝐢 𝐬𝐭𝐢𝐜𝐤𝐞𝐫 𝐩𝐚𝐫 𝐮𝐬𝐤𝐚 𝐈𝐃 𝐩𝐚𝐚𝐧𝐞 𝐤𝐞 𝐥𝐢𝐲𝐞. 🌠
 
 💖 *𝐌𝐨𝐝𝐞𝐫𝐚𝐭𝐢𝐨𝐧* (💬 𝐑𝐞𝐩𝐥𝐲 𝐤𝐚𝐫 𝐤𝐞 𝐔𝐬𝐞𝐫 𝐤𝐞 𝐛𝐚𝐭𝐚𝐨 𝐲𝐚 𝐩𝐡𝐢𝐫 🆔 𝐔𝐬𝐞𝐫 𝐈𝐃 𝐝𝐞 𝐝𝐨):
   /warn <user id> - 𝐂𝐡𝐞𝐭𝐚𝐰𝐚𝐧𝐢 𝐝𝐨. ⚠️
@@ -142,6 +161,8 @@ async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
   /welcome [on|off] - 𝐒𝐰𝐚𝐠𝐚𝐭 𝐬𝐚𝐧𝐝𝐞𝐬𝐡 𝐜𝐡𝐚𝐥𝐮 𝐲𝐚 𝐛𝐚𝐧𝐝 𝐤𝐚𝐫𝐨. 🥳
   /setwelcome <sandesh> - 𝐒𝐰𝐚𝐠𝐚𝐭 𝐬𝐚𝐧𝐝𝐞𝐬𝐡 𝐥𝐢𝐤𝐡𝐨. ✍️
   /cleanwelcome - 𝐒𝐰𝐚𝐠𝐚𝐭 𝐬𝐚𝐧𝐝𝐞𝐬𝐡 𝐦𝐢𝐭𝐚𝐨. 🗑️
+  /setwelcomesticker <sticker_id> - 𝐒𝐰𝐚𝐠𝐚𝐭 𝐬𝐭𝐢𝐜𝐤𝐞𝐫 𝐛𝐚𝐝𝐥𝐨. 💖
+  /setleavesticker <sticker_id> - 𝐉𝐚𝐚𝐧𝐞 𝐰𝐚𝐥𝐚 𝐬𝐭𝐢𝐜𝐤𝐞𝐫 𝐛𝐚𝐝𝐥𝐨. 💔
 
 📜 *𝐍𝐢𝐲𝐚𝐦 𝐊𝐚𝐧𝐮𝐧 (𝐑𝐮𝐥𝐞𝐬 𝐒𝐲𝐬𝐭𝐞𝐦):*
   /setrules <likh do> - 𝐍𝐢𝐲𝐚𝐦 𝐥𝐢𝐤𝐡 𝐝𝐨. 📄
@@ -373,6 +394,23 @@ async def cleanwelcome(update: Update, context: ContextTypes.DEFAULT_TYPE):
     welcome_msg = ""
     await update.message.reply_text("✅ 𝐒𝐰𝐚𝐠𝐚𝐭 𝐬𝐚𝐧𝐝𝐞𝐬𝐡 𝐬𝐚𝐚𝐟 𝐡𝐨 𝐠𝐚𝐢𝐥. 𝐍𝐚𝐲𝐚 𝐬𝐡𝐮𝐫𝐮 𝐤𝐚𝐫𝐞 𝐤𝐞 𝐛𝐚! 🎨 𝐅𝐫𝐞𝐬𝐡 𝐩𝐚𝐠𝐞! 📄")
 
+async def set_welcome_sticker(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    global JOIN_STICKER_ID
+    if not context.args:
+        await update.message.reply_text("𝐊𝐫𝐢𝐩𝐲𝐚 𝐬𝐭𝐢𝐜𝐤𝐞𝐫 𝐈𝐃 𝐝𝐞𝐢𝐧 𝐣𝐢𝐬𝐞 𝐰𝐞𝐥𝐜𝐨𝐦𝐞 𝐬𝐭𝐢𝐜𝐤𝐞𝐫 𝐤𝐞 𝐫𝐮𝐩 𝐦𝐞𝐢𝐧 𝐬𝐞𝐭 𝐤𝐚𝐫𝐧𝐚 𝐡𝐚𝐢. 💖")
+        return
+    JOIN_STICKER_ID = context.args[0]
+    await update.message.reply_text(f"✅ 𝐖𝐞𝐥𝐜𝐨𝐦𝐞 𝐬𝐭𝐢𝐜𝐤𝐞𝐫 𝐈𝐃 𝐬𝐞𝐭 𝐡𝐨 𝐠𝐚𝐢𝐥: `{JOIN_STICKER_ID}`. 𝐀𝐛 𝐧𝐚𝐲𝐞 𝐦𝐞𝐦𝐛𝐞𝐫𝐬 𝐤𝐨 𝐞𝐡 𝐬𝐭𝐢𝐜𝐤𝐞𝐫 𝐦𝐢𝐥𝐞𝐠𝐚! 🎉", parse_mode="Markdown")
+
+async def set_leave_sticker(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    global LEAVE_STICKER_ID
+    if not context.args:
+        await update.message.reply_text("𝐊𝐫𝐢𝐩𝐲𝐚 𝐬𝐭𝐢𝐜𝐤𝐞𝐫 𝐈𝐃 𝐝𝐞𝐢𝐧 𝐣𝐢𝐬𝐞 𝐥𝐞𝐚𝐯𝐞 𝐬𝐭𝐢𝐜𝐤𝐞𝐫 𝐤𝐞 𝐫𝐮𝐩 𝐦𝐞𝐢𝐧 𝐬𝐞𝐭 𝐤𝐚𝐫𝐧𝐚 𝐡𝐚𝐢. 💔")
+        return
+    LEAVE_STICKER_ID = context.args[0]
+    await update.message.reply_text(f"✅ 𝐋𝐞𝐚𝐯𝐞 𝐬𝐭𝐢𝐜𝐤𝐞𝐫 𝐈𝐃 𝐬𝐞𝐭 𝐡𝐨 𝐠𝐚𝐢𝐥: `{LEAVE_STICKER_ID}`. 𝐀𝐛 𝐣𝐚𝐚𝐧𝐞 𝐰𝐚𝐥𝐞 𝐦𝐞𝐦𝐛𝐞𝐫𝐬 𝐤𝐨 𝐞𝐡 𝐬𝐭𝐢𝐜𝐤𝐞𝐫 𝐦𝐢𝐥𝐞𝐠𝐚! 🥺", parse_mode="Markdown")
+
+
 # --- Rules System Commands ---
 async def setrules(update: Update, context: ContextTypes.DEFAULT_TYPE):
     global rules_msg
@@ -419,22 +457,40 @@ async def delete_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(f"𝐌𝐞𝐬𝐬𝐚𝐠𝐞 𝐦𝐢𝐭𝐚𝐧𝐞 𝐦𝐞𝐢𝐧 𝐝𝐢𝐤𝐤𝐚𝐭: {e} 😥 𝐎𝐡 𝐧𝐨! 😨")
 
 async def purge(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not context.args:
-        await update.message.reply_text("𝐊𝐞𝐤𝐚𝐫𝐚 𝐦𝐞𝐬𝐬𝐚𝐠𝐞 𝐦𝐢𝐭𝐚𝐧𝐞 𝐤𝐞 𝐛𝐚? 𝐒𝐚𝐧𝐤𝐡𝐲𝐚 𝐛𝐚𝐭𝐚𝐨 𝐧𝐚! 🧹 𝐊𝐢𝐭𝐧𝐚 𝐬𝐚𝐚𝐟 𝐤𝐚𝐫𝐞𝐧? 🧐")
+    if not update.message.reply_to_message and not context.args:
+        await update.message.reply_text("𝐊𝐞𝐤𝐚𝐫𝐚 𝐦𝐞𝐬𝐬𝐚𝐠𝐞 𝐦𝐢𝐭𝐚𝐧𝐞 𝐤𝐞 𝐛𝐚? 𝐒𝐚𝐧𝐤𝐡𝐲𝐚 𝐛𝐚𝐭𝐚𝐨 𝐧𝐚 𝐲𝐚 𝐑𝐞𝐩𝐥𝐲 𝐤𝐚𝐫𝐨! 🧹")
         return
-    try:
-        num = int(context.args[0])
-        chat_id = update.effective_chat.id
-        
-        await update.message.reply_text(f"🧹 {num} 𝐦𝐞𝐬𝐬𝐚𝐠𝐞 𝐦𝐢𝐭𝐚𝐧𝐚 𝐬𝐡𝐮𝐫𝐮 𝐡𝐨 𝐫𝐚𝐡𝐚 𝐡𝐚𝐢... ✨")
-        for i in range(num + 1): # Include the purge command itself
-            try:
-                await context.bot.delete_message(chat_id, update.message.message_id - i)
-            except Exception:
-                pass 
-        await update.message.reply_text("✅ 𝐒𝐚𝐛 𝐬𝐚𝐚𝐟 𝐡𝐨 𝐠𝐚𝐢𝐥. 𝐂𝐡𝐚𝐦𝐜𝐡𝐚𝐦𝐚𝐭𝐚! 💖 𝐄𝐤 𝐝𝐚𝐦 𝐧𝐚𝐲𝐚! 💫")
-    except Exception as e:
-        await update.message.reply_text(f"𝐌𝐞𝐬𝐬𝐚𝐠𝐞 𝐦𝐢𝐭𝐚𝐧𝐞 𝐦𝐞𝐢𝐧 𝐠𝐚𝐝𝐛𝐚𝐝: {e} 😥 𝐘𝐞 𝐭𝐨𝐡 𝐛𝐮𝐫𝐚 𝐡𝐮𝐚! 😔")
+
+    chat_id = update.effective_chat.id
+    messages_to_delete = []
+
+    if update.message.reply_to_message:
+        # If replying to a message, delete from the replied message up to the current command
+        start_message_id = update.message.reply_to_message.message_id
+        end_message_id = update.message.message_id
+        for i in range(start_message_id, end_message_id + 1):
+            messages_to_delete.append(i)
+    elif context.args:
+        try:
+            num = int(context.args[0])
+            # Delete 'num' messages including the purge command itself
+            for i in range(num + 1):
+                messages_to_delete.append(update.message.message_id - i)
+        except ValueError:
+            await update.message.reply_text("❌ 𝐒𝐚𝐡𝐢-𝐬𝐚𝐡𝐢 𝐧𝐮𝐦𝐛𝐞𝐫𝐰𝐚 𝐝𝐚𝐚𝐥, 𝐌𝐚𝐡𝐚𝐫𝐚𝐣. 💅")
+            return
+    else:
+        await update.message.reply_text("𝐊𝐞𝐤𝐚𝐫𝐚 𝐦𝐞𝐬𝐬𝐚𝐠𝐞 𝐦𝐢𝐭𝐚𝐧𝐞 𝐤𝐞 𝐛𝐚? 𝐒𝐚𝐧𝐤𝐡𝐲𝐚 𝐛𝐚𝐭𝐚𝐨 𝐧𝐚 𝐲𝐚 𝐑𝐞𝐩𝐥𝐲 𝐤𝐚𝐫𝐨! 🧹")
+        return
+
+    await update.message.reply_text(f"🧹 {len(messages_to_delete)} 𝐦𝐞𝐬𝐬𝐚𝐠𝐞 𝐦𝐢𝐭𝐚𝐧𝐚 𝐬𝐡𝐮𝐫𝐮 𝐡𝐨 𝐫𝐚𝐡𝐚 𝐡𝐚𝐢... ✨")
+    for msg_id in messages_to_delete:
+        try:
+            await context.bot.delete_message(chat_id, msg_id)
+        except Exception as e:
+            logger.warning(f"Could not delete message {msg_id}: {e}") # Log, but continue
+    await update.message.reply_text("✅ 𝐒𝐚𝐛 𝐬𝐚𝐚𝐟 𝐡𝐨 𝐠𝐚𝐢𝐥. 𝐂𝐡𝐚𝐦𝐜𝐡𝐚𝐦𝐚𝐭𝐚! 💖 𝐄𝐤 𝐝𝐚𝐦 𝐧𝐚𝐲𝐚! 💫")
+
 
 async def cleanservice(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
@@ -442,6 +498,7 @@ async def cleanservice(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     arg = context.args[0].lower()
     if arg == "on":
+        # Note: This functionality requires an actual filter for service messages to be implemented in handle_messages
         await update.message.reply_text("✅ 𝐒𝐞𝐫𝐯𝐢𝐜𝐞 𝐦𝐞𝐬𝐬𝐚𝐠𝐞 𝐬𝐚𝐚𝐟 𝐤𝐚𝐫𝐧𝐚 𝐜𝐡𝐚𝐥𝐮 𝐡𝐨 𝐠𝐚𝐢𝐥. 𝐊𝐨𝐧𝐨 𝐠𝐚𝐝𝐛𝐚𝐝 𝐧𝐚𝐡𝐢! 🧼 𝐅𝐮𝐥𝐥 𝐜𝐥𝐞𝐚𝐧𝐢𝐧𝐠! 💖")
     elif arg == "off":
         await update.message.reply_text("✅ 𝐒𝐞𝐫𝐯𝐢𝐜𝐞 𝐦𝐞𝐬𝐬𝐚𝐠𝐞 𝐬𝐚𝐚𝐟 𝐤𝐚𝐫𝐧𝐚 𝐛𝐚𝐧𝐝 𝐡𝐨 𝐠𝐚𝐢𝐥. 𝐀𝐛 𝐬𝐚𝐛 𝐝𝐞𝐤𝐡𝐨! 🤪 𝐌𝐚𝐬𝐭𝐢 𝐤𝐚𝐫𝐨! 😂")
@@ -466,10 +523,20 @@ async def get_sticker_ids(update: Update, context: ContextTypes.DEFAULT_TYPE):
     response_text = (
         f"🖼️ *𝐒𝐭𝐢𝐜𝐤𝐞𝐫 𝐈𝐃𝐬 𝐝𝐞𝐤𝐡𝐚, 𝐘𝐚𝐫!* 🖼️\n\n"
         f"• 💖 *𝐉𝐨𝐢𝐧 𝐒𝐭𝐢𝐜𝐤𝐞𝐫 𝐈𝐃:* `{JOIN_STICKER_ID}`\n"
-        f"• 💔 *𝐋𝐞𝐚𝐯𝐞 𝐒𝐭𝐢𝐜𝐤𝐞𝐫 𝐈𝐃:* `{LEAVE_STICKER_ID}`\n\n"
+        f"• 💔 *𝐋𝐞𝐚𝐯𝐞 𝐒𝐭𝐢𝐜𝐤𝐞𝐫 𝐈𝐃:* `{LEAVE_STICKER_ID}`\n"
+        f"• 🚀 *𝐒𝐭𝐚𝐫𝐭 𝐀𝐧𝐢𝐦𝐚𝐭𝐢𝐨𝐧 𝐒𝐭𝐢𝐜𝐤𝐞𝐫 𝐈𝐃:* `{START_ANIMATION_STICKER_ID}`\n"
+        f"• 🎉 *𝐒𝐭𝐚𝐫𝐭 𝐅𝐢𝐧𝐚𝐥 𝐒𝐭𝐢𝐜𝐤𝐞𝐫 𝐈𝐃:* `{START_FINAL_STICKER_ID}`\n\n"
         f"𝐄 𝐥𝐨, 𝐭𝐨𝐡𝐚𝐫𝐚 𝐩𝐚𝐬𝐚𝐧𝐝𝐢𝐝𝐚 𝐬𝐭𝐢𝐜𝐤𝐞𝐫 𝐤𝐢 𝐈𝐃𝐬! ✨"
     )
     await update.message.reply_text(response_text, parse_mode="Markdown")
+
+# --- New Command: /getstickerid (reply to a sticker) ---
+async def get_sticker_id_from_reply(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.message.reply_to_message and update.message.reply_to_message.sticker:
+        sticker_id = update.message.reply_to_message.sticker.file_id
+        await update.message.reply_text(f"🌠 𝐄 𝐬𝐭𝐢𝐜𝐤𝐞𝐫 𝐤𝐚 𝐈𝐃 𝐡𝐚𝐢: `{sticker_id}`. 𝐀𝐛 𝐢𝐬𝐞 𝐮𝐬𝐞 𝐤𝐚𝐫𝐨, 𝐘𝐚𝐫! ✨", parse_mode="Markdown")
+    else:
+        await update.message.reply_text("🤦‍♀️ 𝐊𝐫𝐢𝐩𝐲𝐚 𝐤𝐢𝐬𝐢 𝐬𝐭𝐢𝐜𝐤𝐞𝐫 𝐩𝐚𝐫 𝐫𝐞𝐩𝐥𝐲 𝐤𝐚𝐫𝐞𝐢𝐧 𝐈𝐃 𝐩𝐚𝐚𝐧𝐞 𝐤𝐞 𝐥𝐢𝐲𝐞. 💌")
 
 
 # --- New Member Handler ---
@@ -575,7 +642,7 @@ async def handle_links(update: Update, context: ContextTypes.DEFAULT_TYPE):
             except Exception:
                 pass
         else:
-            await context.bot.send_message(msg.chat.id, f"⚠️ {username} 𝐤𝐞 𝐥𝐢𝐧𝐤 𝐛𝐡𝐞𝐣𝐥𝐞 𝐩𝐚𝐫 𝐜𝐡𝐞𝐭𝐚𝐰𝐚𝐧𝐢 𝐦𝐢𝐥𝐚𝐥! [{warns[uid]}/{warn_limit}] 𝐋𝐢𝐧𝐤 𝐦𝐚𝐭 𝐛𝐡𝐞𝐣𝐨, 𝐌𝐢𝐭𝐫𝐚! 🎀 𝐀𝐠𝐥𝐢 𝐛𝐚𝐚𝐫 𝐬𝐞 𝐧𝐚𝐡𝐢! 🚫")
+            await context.bot.send_message(msg.chat.id, f"⚠️ {username} 𝐤𝐞 𝐥𝐢𝐧𝐤 𝐛𝐡𝐞𝐣𝐥𝐞 𝐩𝐚𝐫 𝐜𝐡𝐞𝐭𝐚𝐰𝐚𝐧𝐢 𝐦𝐢𝐥𝐚al! [{warns[uid]}/{warn_limit}] 𝐋𝐢𝐧𝐤 𝐦𝐚𝐭 𝐛𝐡𝐞𝐣𝐨, 𝐌𝐢𝐭𝐫𝐚! 🎀 𝐀𝐠𝐥𝐢 𝐛𝐚𝐚𝐫 𝐬𝐞 𝐧𝐚𝐡𝐢! 🚫")
 
 # --- Fallback Help for "help" in Group Chats ---
 async def fallback_help(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -592,8 +659,9 @@ async def main():
     app.add_handler(CommandHandler("neo", neo))
     app.add_handler(CommandHandler("ping", ping))
     app.add_handler(CommandHandler("donate", donate))
-    app.add_handler(CommandHandler("id", get_ids))  # New: /id command
-    app.add_handler(CommandHandler("stickerid", get_sticker_ids)) # New: /stickerid command
+    app.add_handler(CommandHandler("id", get_ids))
+    app.add_handler(CommandHandler("stickerid", get_sticker_ids))
+    app.add_handler(CommandHandler("getstickerid", get_sticker_id_from_reply, filters=filters.REPLY))
 
 
     # Member join/leave handlers
@@ -622,12 +690,14 @@ async def main():
     # Spam filter commands
     app.add_handler(CommandHandler("banlink", banlink))
     app.add_handler(CommandHandler("blocklist", blocklist_cmd))
-    app.add_handler(CommandHandler("blocklistmode", blocklistmode_cmd))
+    app.add_handler(CommandHandler("blocklistmode", blocklist_mode_cmd))
 
     # Welcome system commands
     app.add_handler(CommandHandler("welcome", welcome))
     app.add_handler(CommandHandler("setwelcome", setwelcome))
     app.add_handler(CommandHandler("cleanwelcome", cleanwelcome))
+    app.add_handler(CommandHandler("setwelcomesticker", set_welcome_sticker))
+    app.add_handler(CommandHandler("setleavesticker", set_leave_sticker))
 
     # Rules system commands
     app.add_handler(CommandHandler("setrules", setrules))
