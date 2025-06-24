@@ -73,7 +73,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "💖 𝐇𝐨 𝐠𝐚𝐢𝐥, 𝐘𝐚𝐫! 💯 𝐉𝐚𝐥𝐝𝐢 𝐚𝐚𝐲𝐞𝐧𝐠𝐞, 𝐑𝐨𝐜𝐤 𝐤𝐚𝐫𝐧𝐞... 🎶"
     ]
     
-    lols = await update.message.reply_text("💖 𝐒𝐡𝐮𝐫𝐮 𝐤𝐚𝐫 𝐫𝐚𝐡𝐞 𝐡𝐚𝐢𝐧, 𝐘𝐚𝐫! 🚀")
+    lols = await update.message.reply_text("💖 𝐒𝐡𝐮𝐫𝐮 𝐤𝐚𝐫 𝐫𝐚𝐡େ 𝐡𝐚𝐢𝐧, 𝐘𝐚𝐫! 🚀")
     
     # Send start animation sticker if available
     if START_ANIMATION_STICKER_ID:
@@ -152,7 +152,7 @@ async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
   /lock [all|links|photos] - 𝐒𝐚𝐛 𝐛𝐚𝐧𝐝 𝐤𝐚𝐫𝐨. 🔐
   /unlock [all|links|photos] - 𝐒𝐚𝐛 𝐤𝐡𝐨𝐥𝐨. 🔓
 
-🚫 *𝐅𝐚𝐥𝐭𝐮 𝐒𝐚𝐧𝐝𝐞𝐬𝐡 𝐑𝐨𝐤𝐧𝐞 𝐖𝐚𝐥𝐚 (𝐒𝐩𝐚𝐦 𝐅𝐢𝐥𝐭𝐞𝐫):*
+🚫 *𝐅𝐚𝐥t𝐮 𝐒𝐚𝐧𝐝𝐞𝐬𝐡 𝐑𝐨𝐤𝐧𝐞 𝐖𝐚𝐥𝐚 (𝐒𝐩𝐚𝐦 𝐅𝐢𝐥𝐭𝐞𝐫):*
   /banlink - 𝐋𝐢𝐧𝐤 𝐛𝐡𝐞𝐣𝐧𝐚 𝐛𝐚𝐧𝐝 𝐤𝐚𝐫𝐨 𝐲𝐚 𝐜𝐡𝐚𝐥𝐮 𝐤𝐚𝐫𝐨. 🔗
   /blocklist <shabd> - 𝐘𝐞 𝐬𝐡𝐚𝐛𝐝 𝐥𝐢𝐬𝐭 𝐦𝐞𝐢𝐧 𝐝𝐚𝐚𝐥𝐨. 📝
   /blocklistmode <mute|ban> - 𝐊𝐚𝐚𝐦 𝐝𝐞𝐤𝐡𝐨 𝐦𝐮𝐭𝐞 𝐲𝐚 𝐛𝐚𝐧. ⚔️
@@ -200,7 +200,7 @@ async def warn(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await context.bot.ban_chat_member(update.effective_chat.id, uid)
         await update.message.reply_text(f"🚫 𝐄 𝐔𝐬𝐞𝐫 (𝐈𝐃: {uid}) 𝐤𝐞 {warn_limit} 𝐜𝐡𝐞𝐭𝐚𝐰𝐚𝐧𝐢 𝐡𝐨 𝐠𝐚𝐢𝐥. 𝐀𝐛 𝐧𝐢𝐤𝐚𝐥𝐨 𝐢𝐬𝐤𝐨, 𝐘𝐚𝐫! 💔 𝐓𝐚𝐭𝐚 𝐛𝐲𝐞-𝐛𝐲𝐞! 👋")
     else:
-        await update.message.reply_text(f"⚠️ 𝐄 𝐔𝐬𝐞𝐫 (𝐈𝐃: {uid}) 𝐤𝐞 𝐜𝐡𝐞𝐭𝐚𝐰𝐚𝐧𝐢 𝐦𝐢𝐥𝐚𝐥 𝐛𝐚! [{warns[uid]}/{warn_limit}] 𝐓𝐡𝐨𝐝𝐚 𝐝𝐡𝐲𝐚𝐧 𝐫𝐚𝐤𝐡𝐨, 𝐌𝐢𝐭𝐫𝐚! 🎀 𝐀𝐠𝐥𝐢 𝐛𝐚𝐚𝐫 𝐬𝐞 𝐧𝐚𝐡𝐢! 🚫")
+        await update.message.reply_text(f"⚠️ 𝐄 𝐔𝐬𝐞𝐫 (𝐈𝐃: {uid}) 𝐤𝐞 𝐜𝐡𝐞𝐭𝐚𝐰𝐚𝐧𝐢 𝐦𝐢𝐥𝐚al 𝐛𝐚! [{warns[uid]}/{warn_limit}] 𝐓𝐡𝐨𝐝𝐚 𝐝𝐡𝐲𝐚𝐧 𝐫𝐚𝐤𝐡𝐨, 𝐌𝐢𝐭𝐫𝐚! 🎀 𝐀𝐠𝐥𝐢 𝐛𝐚𝐚𝐫 𝐬𝐞 𝐧𝐚𝐡𝐢! 🚫")
 
 async def resetwarns(update: Update, context: ContextTypes.DEFAULT_TYPE):
     uid = await get_target_user(update, context)
@@ -335,126 +335,154 @@ async def unlock(update: Update, context: ContextTypes.DEFAULT_TYPE):
             locked[key] = False
         await update.message.reply_text("🔓 𝐒𝐚𝐛 𝐤𝐮𝐜𝐡 𝐤𝐡𝐮𝐥 𝐠𝐚𝐢𝐥. 𝐀𝐛 𝐜𝐡𝐚𝐦𝐤𝐨, 𝐡𝐨! 💖 𝐏𝐚𝐫𝐭𝐲 𝐡𝐨 𝐣𝐚𝐲𝐞! 🥳")
     else:
-        await update.message.reply_text("🤦‍♀️ 𝐆𝐚𝐥𝐚𝐭 𝐛𝐚𝐚𝐭 𝐛𝐨𝐥𝐚𝐭 𝐡𝐨, 𝐒𝐰𝐞𝐞𝐭𝐢𝐞. '𝐚𝐥𝐥', '𝐥𝐢𝐧𝐤𝐬', 𝐲𝐚 '𝐩𝐡𝐨𝐭𝐨𝐬' 𝐛𝐨𝐥 𝐧𝐚. 🎀")
+        await update.message.reply_text("🤦‍♀️ 𝐆𝐚𝐥𝐚𝐭 𝐛𝐚𝐚𝐭 𝐛𝐨𝐥𝐚𝐭 𝐡𝐨, 𝐌𝐚𝐡𝐚𝐫𝐚𝐣. '𝐚𝐥𝐥', '𝐥𝐢𝐧𝐤𝐬', 𝐲𝐚 '𝐩𝐡𝐨𝐭𝐨𝐬' 𝐛𝐨𝐥 𝐧𝐚. 🎀")
 
 # --- Spam Filter Commands ---
-async def banlink(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def banlink_toggle(update: Update, context: ContextTypes.DEFAULT_TYPE):
     global banlink_enabled
-    banlink_enabled = not banlink_enabled
-    state = "𝐂𝐡𝐚𝐥𝐮 𝐡𝐨 𝐠𝐚𝐢𝐥 ✅" if banlink_enabled else "𝐁𝐚𝐧𝐝 𝐡𝐨 𝐠𝐚𝐢𝐥 ❌"
-    await update.message.reply_text(f"🔗 𝐋𝐢𝐧𝐤 𝐟𝐢𝐥𝐭𝐞𝐫 𝐚𝐛 {state} 𝐛𝐚. 𝐊𝐨𝐢 𝐟𝐚𝐥𝐭𝐮 𝐥𝐢𝐧𝐤 𝐧𝐚 𝐛𝐡𝐞𝐣𝐞𝐠𝐚! 🚫 𝐒𝐚𝐦𝐚𝐣𝐡𝐚 𝐤𝐢 𝐧𝐚𝐡𝐢? 🧐", parse_mode="Markdown")
+    if not context.args:
+        await update.message.reply_text(f"🔗 𝐋𝐢𝐧𝐤 𝐟𝐢𝐥𝐭𝐞𝐫 𝐚𝐛𝐡𝐢 {'𝐜𝐡𝐚𝐥𝐮 𝐛𝐚' if banlink_enabled else '𝐛𝐚𝐧𝐝 𝐛𝐚'}. 𝐂𝐡𝐚𝐥𝐮 𝐤𝐚𝐫𝐞 𝐤𝐞 𝐥𝐢𝐲𝐞 '/banlink on' 𝐚𝐮𝐫 𝐛𝐚𝐧𝐝 𝐤𝐚𝐫𝐞 𝐤𝐞 𝐥𝐢𝐲𝐞 '/banlink off' 𝐮𝐬𝐞 𝐤𝐚𝐫𝐨. 💬")
+        return
+    
+    state = context.args[0].lower()
+    if state == "on":
+        banlink_enabled = True
+        await update.message.reply_text("✅ 𝐋𝐢𝐧𝐤 𝐟𝐢𝐥𝐭𝐞𝐫 𝐜𝐡𝐚𝐥𝐮 𝐡𝐨 𝐠𝐚𝐢𝐥. 𝐀𝐛 𝐤𝐨𝐢 𝐥𝐢𝐧𝐤 𝐧𝐚 𝐛𝐡𝐞𝐣𝐞𝐠𝐚! 🚫 𝐒𝐚𝐟𝐚𝐢 𝐡𝐨 𝐠𝐚𝐢𝐥! ✨")
+    elif state == "off":
+        banlink_enabled = False
+        await update.message.reply_text("❌ 𝐋𝐢𝐧𝐤 𝐟𝐢𝐥𝐭𝐞𝐫 𝐛𝐚𝐧𝐝 𝐡𝐨 𝐠𝐚𝐢𝐥. 𝐀𝐛 𝐥𝐢𝐧𝐤 𝐛𝐡𝐞𝐣 𝐬𝐚𝐤𝐨 𝐡𝐨! 🥳 𝐅𝐫𝐞𝐞𝐝𝐨𝐦! 🔓")
+    else:
+        await update.message.reply_text("🤦‍♀️ 𝐆𝐚𝐥𝐚𝐭 𝐛𝐚𝐚𝐭 𝐛𝐨𝐥𝐚𝐭 𝐡𝐨, 𝐌𝐚𝐡𝐚𝐫𝐚𝐣. '𝐨𝐧' 𝐲𝐚 '𝐨𝐟𝐟' 𝐛𝐨𝐥 𝐧𝐚. 💅")
 
 async def blocklist_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
-        current = ", ".join(blocklist) if blocklist else "𝐊𝐡𝐚𝐥𝐢 𝐛𝐚"
-        await update.message.reply_text(f"𝐀𝐛𝐡𝐢 𝐤𝐞 𝐛𝐥𝐨𝐜𝐤𝐥𝐢𝐬𝐭: {current}. 𝐒𝐚𝐚𝐟-𝐬𝐮𝐭𝐡𝐫𝐚 𝐫𝐚𝐤𝐡𝐨, 𝐘𝐚𝐫! 🧹 𝐍𝐨 𝐠𝐚𝐧𝐝𝐚 𝐛𝐚𝐚𝐭! 🤬")
+        if not blocklist:
+            await update.message.reply_text("📝 𝐁𝐥𝐨𝐜𝐤𝐥𝐢𝐬𝐭 𝐚𝐛𝐡𝐢 𝐤𝐡𝐚𝐥𝐢 𝐛𝐚. 𝐊𝐨𝐢 𝐬𝐡𝐚𝐛𝐝 𝐧𝐚𝐡𝐢 𝐛𝐚! 🚫")
+        else:
+            words = ", ".join(blocklist)
+            await update.message.reply_text(f"📝 𝐁𝐥𝐨𝐜𝐤𝐥𝐢𝐬𝐭 𝐦𝐞𝐢𝐧 𝐲𝐞 𝐬𝐡𝐚𝐛𝐝 𝐡𝐚𝐢𝐧: `{words}`. 𝐈𝐧𝐬𝐞 𝐝𝐮𝐫 𝐫𝐚𝐡𝐨! ⚔️")
         return
-    word = context.args[0].lower()
-    blocklist.add(word)
-    await update.message.reply_text(f"✅ '{word}' 𝐛𝐥𝐨𝐜𝐤𝐥𝐢𝐬𝐭 𝐦𝐞𝐢𝐧 𝐝𝐚𝐚𝐥 𝐝𝐞𝐞𝐧𝐢. 𝐍𝐚𝐤𝐚𝐫𝐚𝐭𝐦𝐚𝐤𝐭𝐚 𝐧𝐚𝐡𝐢 𝐜𝐡𝐚𝐥𝐞𝐠𝐢, 𝐣𝐞𝐞! 💅 𝐅𝐮𝐥𝐥 𝐩𝐨𝐬𝐢𝐭𝐢𝐯𝐢𝐭𝐲! 💖")
 
-async def blocklistmode_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    action = context.args[0].lower()
+    word = " ".join(context.args[1:]).lower()
+
+    if action == "add":
+        if word:
+            blocklist.add(word)
+            await update.message.reply_text(f"✅ `{word}` 𝐛𝐥𝐨𝐜𝐤𝐥𝐢𝐬𝐭 𝐦𝐞𝐢𝐧 𝐝𝐚𝐥 𝐝𝐞𝐞𝐧𝐢. 𝐀𝐛 𝐲𝐞 𝐬𝐡𝐚𝐛𝐝 𝐧𝐚 𝐜𝐡𝐚𝐥𝐞𝐠𝐚! 🚫")
+        else:
+            await update.message.reply_text("🤦‍♀️ 𝐊𝐚 𝐬𝐡𝐚𝐛𝐝 𝐝𝐚𝐚𝐥𝐞 𝐤𝐞 𝐛𝐚? 𝐁𝐚𝐭𝐚𝐨 𝐧𝐚! 💬")
+    elif action == "remove":
+        if word in blocklist:
+            blocklist.remove(word)
+            await update.message.reply_text(f"✅ `{word}` 𝐛𝐥𝐨𝐜𝐤𝐥𝐢𝐬𝐭 𝐬𝐞 𝐡𝐚𝐭𝐚 𝐝𝐞𝐞𝐧𝐢. 𝐀𝐛 𝐲𝐞 𝐬𝐡𝐚𝐛𝐝 𝐜𝐡𝐚𝐥 𝐬𝐚𝐤𝐭𝐚 𝐡𝐚! 🥳")
+        else:
+            await update.message.reply_text(f"❌ `{word}` 𝐛𝐥𝐨𝐜𝐤𝐥𝐢𝐬𝐭 𝐦𝐞𝐢𝐧 𝐧𝐚𝐡𝐢 𝐛𝐚. 𝐊𝐚𝐚𝐡𝐞 𝐡𝐚𝐭𝐚𝐞𝐛𝐚? 🤔")
+    else:
+        await update.message.reply_text("🤦‍♀️ 𝐆𝐚𝐥𝐚𝐭 𝐤𝐚𝐦𝐚𝐧𝐝 𝐛𝐚, 𝐌𝐚𝐡𝐚𝐫𝐚𝐣. '𝐚𝐝𝐝' 𝐲𝐚 '𝐫𝐞𝐦𝐨𝐯𝐞' 𝐮𝐬𝐞 𝐤𝐚𝐫𝐨. 💅")
+
+async def blocklist_mode_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     global blocklist_mode
     if not context.args:
-        await update.message.reply_text(f"𝐀𝐛𝐡𝐢 𝐤𝐞 𝐛𝐥𝐨𝐜𝐤𝐥𝐢𝐬𝐭 𝐦𝐨𝐝𝐞: {blocklist_mode}. 𝐂𝐡𝐮𝐧𝐨 𝐝𝐡𝐲𝐚𝐧 𝐬𝐞, 𝐘𝐚𝐫! 🤔 𝐆𝐚𝐝𝐛𝐚𝐝 𝐧𝐚 𝐡𝐨𝐧𝐚 𝐜𝐡𝐚𝐡𝐢𝐲𝐞! 🚫")
+        await update.message.reply_text(f"⚔️ 𝐁𝐥𝐨𝐜𝐤𝐥𝐢𝐬𝐭 𝐦𝐨𝐝𝐞 𝐚𝐛𝐡𝐢 `{blocklist_mode}` 𝐛𝐚. '𝐦𝐮𝐭𝐞' 𝐲𝐚 '𝐛𝐚𝐧' 𝐬𝐞 𝐛𝐚𝐝𝐥𝐨. 💬")
         return
+    
     mode = context.args[0].lower()
     if mode in ["mute", "ban"]:
         blocklist_mode = mode
-        await update.message.reply_text(f"✅ 𝐁𝐥𝐨𝐜𝐤𝐥𝐢𝐬𝐭 𝐦𝐨𝐝𝐞 {mode} 𝐡𝐨 𝐠𝐚𝐢𝐥. 𝐒𝐮𝐫𝐚𝐤𝐬𝐡𝐚 𝐜𝐡𝐚𝐥𝐮! 🛡️ 𝐀𝐛 𝐬𝐚𝐛 𝐬𝐞𝐟 𝐛𝐚! 🔐")
+        await update.message.reply_text(f"✅ 𝐁𝐥𝐨𝐜𝐤𝐥𝐢𝐬𝐭 𝐦𝐨𝐝𝐞 `{blocklist_mode}` 𝐡𝐨 𝐠𝐚𝐢𝐥. 𝐀𝐛 𝐝𝐞𝐤𝐡𝐚 𝐤𝐚 𝐡𝐨𝐭𝐚 𝐡𝐚𝐢! 💥")
     else:
-        await update.message.reply_text("🤦‍♀️ 𝐆𝐚𝐥𝐚𝐭 𝐦𝐨𝐝𝐞 𝐛𝐨𝐥𝐚𝐭 𝐡𝐨, 𝐌𝐚𝐡𝐚𝐫𝐚𝐣. '𝐦𝐮𝐭𝐞' 𝐲𝐚 '𝐛𝐚𝐧' 𝐛𝐨𝐥. 💖 𝐊𝐨𝐢 𝐝𝐢𝐤𝐤𝐚𝐭 𝐧𝐚𝐡𝐢! 👍")
+        await update.message.reply_text("🤦‍♀️ 𝐆𝐚𝐥𝐚𝐭 𝐦𝐨𝐝𝐞 𝐛𝐨𝐥𝐚𝐭 𝐡𝐨, 𝐌𝐚𝐡𝐚𝐫𝐚𝐣. '𝐦𝐮𝐭𝐞' 𝐲𝐚 '𝐛𝐚𝐧' 𝐛𝐨𝐥 𝐧𝐚. 💅")
 
 # --- Welcome System Commands ---
 async def welcome(update: Update, context: ContextTypes.DEFAULT_TYPE):
     global welcome_enabled
     if not context.args:
-        await update.message.reply_text("𝐒𝐰𝐚𝐠𝐚𝐭 𝐬𝐚𝐧𝐝𝐞𝐬𝐡 𝐜𝐡𝐚𝐥𝐮 𝐤𝐚𝐫𝐞 𝐤𝐞 𝐛𝐚 𝐲𝐚 𝐛𝐚𝐧𝐝? [𝐨𝐧|𝐨𝐟𝐟] 𝐃𝐡𝐚𝐧𝐠 𝐬𝐞 𝐛𝐚𝐭𝐚𝐨! 🌸")
+        await update.message.reply_text(f"👋 𝐖𝐞𝐥𝐜𝐨𝐦𝐞 𝐦𝐞𝐬𝐬𝐚𝐠𝐞 𝐚𝐛𝐡𝐢 {'𝐜𝐡𝐚𝐥𝐮 𝐛𝐚' if welcome_enabled else '𝐛𝐚𝐧𝐝 𝐛𝐚'}. 𝐂𝐡𝐚𝐥𝐮 𝐤𝐚𝐫𝐞 𝐤𝐞 𝐥𝐢𝐲𝐞 '/welcome on' 𝐚𝐮𝐫 𝐛𝐚𝐧𝐝 𝐤𝐚𝐫𝐞 𝐤𝐞 𝐥𝐢𝐲𝐞 '/welcome off' 𝐮𝐬𝐞 𝐤𝐚𝐫𝐨. 💬")
         return
-    arg = context.args[0].lower()
-    if arg == "on":
+    
+    state = context.args[0].lower()
+    if state == "on":
         welcome_enabled = True
-        await update.message.reply_text("✅ 𝐒𝐰𝐚𝐠𝐚𝐭 𝐬𝐚𝐧𝐝𝐞𝐬𝐡 𝐜𝐡𝐚𝐥𝐮 𝐡𝐨 𝐠𝐚𝐢𝐥. 𝐋𝐞𝐭's 𝐩𝐚𝐫𝐭𝐲! 🥳")
-    elif arg == "off":
+        await update.message.reply_text("✅ 𝐖𝐞𝐥𝐜𝐨𝐦𝐞 𝐦𝐞𝐬𝐬𝐚𝐠𝐞 𝐜𝐡𝐚𝐥𝐮 𝐡𝐨 𝐠𝐚𝐢𝐥. 𝐀𝐛 𝐬𝐚𝐛𝐤𝐨 𝐬𝐰𝐚𝐠𝐚𝐭 𝐦𝐢𝐥𝐞𝐠𝐚! 🥳")
+    elif state == "off":
         welcome_enabled = False
-        await update.message.reply_text("❌ 𝐒𝐰𝐚𝐠𝐚𝐭 𝐬𝐚𝐧𝐝𝐞𝐬𝐡 𝐛𝐚𝐧𝐝 𝐡𝐨 𝐠𝐚𝐢𝐥. 𝐂𝐡𝐮𝐩𝐜𝐡𝐚𝐚𝐩 𝐫𝐚𝐡𝐨! 🤫 𝐍𝐨 𝐦𝐨𝐫𝐞 𝐰𝐞𝐥𝐜𝐨𝐦𝐞! 🤐")
+        await update.message.reply_text("❌ 𝐖𝐞𝐥𝐜𝐨𝐦𝐞 𝐦𝐞𝐬𝐬𝐚𝐠𝐞 𝐛𝐚𝐧𝐝 𝐡𝐨 𝐠𝐚𝐢𝐥. 𝐀𝐛 𝐬𝐡𝐚𝐧𝐭𝐢 𝐫𝐚𝐡𝐞𝐠𝐢. 🤫")
     else:
-        await update.message.reply_text("🤦‍♀️ 𝐆𝐚𝐥𝐚𝐭 𝐛𝐚𝐚𝐭 𝐛𝐨𝐥𝐚𝐭 𝐡𝐨, 𝐃𝐚𝐫𝐥𝐢𝐧𝐠. '𝐨𝐧' 𝐲𝐚 '𝐨𝐟𝐟' 𝐛𝐨𝐥. 🎀 𝐒𝐚𝐦𝐚𝐣𝐡𝐚 𝐤𝐢 𝐧𝐚𝐡𝐢? 🧐")
+        await update.message.reply_text("🤦‍♀️ 𝐆𝐚𝐥𝐚𝐭 𝐛𝐚𝐚𝐭 𝐛𝐨𝐥𝐚𝐭 𝐡𝐨, 𝐌𝐚𝐡𝐚𝐫𝐚𝐣. '𝐨𝐧' 𝐲𝐚 '𝐨𝐟𝐟' 𝐛𝐨𝐥 𝐧𝐚. 💅")
 
 async def setwelcome(update: Update, context: ContextTypes.DEFAULT_TYPE):
     global welcome_msg
-    if not context.args:
-        await update.message.reply_text("𝐊𝐚 𝐰𝐞𝐥𝐜𝐨𝐦𝐞 𝐬𝐚𝐧𝐝𝐞𝐬𝐡 𝐥𝐢𝐤𝐡𝐞 𝐤𝐞 𝐛𝐚? 𝐋𝐢𝐤𝐡 𝐝𝐨 𝐧𝐚! 💖 𝐒𝐮𝐧𝐝𝐚𝐫 𝐬𝐚 𝐥𝐢𝐤𝐡𝐧𝐚! ✍️")
-        return
-    welcome_msg = " ".join(context.args)
-    await update.message.reply_text(f"✅ 𝐒𝐰𝐚𝐠𝐚𝐭 𝐬𝐚𝐧𝐝𝐞𝐬𝐡 𝐬𝐞𝐭 𝐡𝐨 𝐠𝐚𝐢𝐥:\n{welcome_msg}\n\n𝐁𝐚𝐡𝐮𝐭 𝐬𝐮𝐧𝐝𝐚𝐫, 𝐘𝐚𝐫! ✨ 𝐄𝐤 𝐝𝐚𝐦 𝐅𝐢𝐭! 👍")
+    if context.args:
+        welcome_msg = " ".join(context.args)
+        await update.message.reply_text(f"✅ 𝐖𝐞𝐥𝐜𝐨𝐦𝐞 𝐦𝐞𝐬𝐬𝐚𝐠𝐞 𝐛𝐚𝐝𝐚𝐥 𝐝𝐞𝐞𝐧𝐢: `{welcome_msg}`. 𝐍𝐚𝐲𝐚 𝐬𝐚𝐧𝐝𝐞𝐬𝐡! ✨")
+    else:
+        await update.message.reply_text(f"👋 𝐀𝐛𝐡𝐢 𝐤𝐞 𝐰𝐞𝐥𝐜𝐨𝐦𝐞 𝐦𝐞𝐬𝐬𝐚𝐠𝐞 𝐡𝐚𝐢: `{welcome_msg}`. 𝐍𝐚𝐲𝐚 𝐤𝐚 𝐥𝐢𝐤𝐡𝐚𝐢? ✍️")
 
 async def cleanwelcome(update: Update, context: ContextTypes.DEFAULT_TYPE):
     global welcome_msg
-    welcome_msg = ""
-    await update.message.reply_text("✅ 𝐒𝐰𝐚𝐠𝐚𝐭 𝐬𝐚𝐧𝐝𝐞𝐬𝐡 𝐬𝐚𝐚𝐟 𝐡𝐨 𝐠𝐚𝐢𝐥. 𝐍𝐚𝐲𝐚 𝐬𝐡𝐮𝐫𝐮 𝐤𝐚𝐫𝐞 𝐤𝐞 𝐛𝐚! 🎨 𝐅𝐫𝐞𝐬𝐡 𝐩𝐚𝐠𝐞! 📄")
+    welcome_msg = "👋 Welcome!"
+    await update.message.reply_text("✅ 𝐖𝐞𝐥𝐜𝐨𝐦𝐞 𝐦𝐞𝐬𝐬𝐚𝐠𝐞 𝐬𝐚𝐚𝐟 𝐡𝐨 𝐠𝐚𝐢𝐥. 𝐃𝐞𝐟𝐚𝐮𝐥𝐭 𝐩𝐚𝐫 𝐚𝐚 𝐠𝐚𝐢𝐥𝐚! 🗑️")
 
 async def set_welcome_sticker(update: Update, context: ContextTypes.DEFAULT_TYPE):
     global JOIN_STICKER_ID
-    if not context.args:
+    if context.args:
+        JOIN_STICKER_ID = context.args[0]
+        await update.message.reply_text(f"✅ 𝐍𝐚𝐲𝐚 𝐖𝐞𝐥𝐜𝐨𝐦𝐞 𝐒𝐭𝐢𝐜𝐤𝐞𝐫 𝐈𝐃 𝐬𝐞𝐭 𝐤𝐚𝐫 𝐝𝐞𝐞𝐧𝐢: `{JOIN_STICKER_ID}`. 💖 𝐌𝐚𝐣𝐚 𝐤𝐚𝐫𝐨! 🎉", parse_mode="Markdown")
+    else:
         await update.message.reply_text("𝐊𝐫𝐢𝐩𝐲𝐚 𝐬𝐭𝐢𝐜𝐤𝐞𝐫 𝐈𝐃 𝐝𝐞𝐢𝐧 𝐣𝐢𝐬𝐞 𝐰𝐞𝐥𝐜𝐨𝐦𝐞 𝐬𝐭𝐢𝐜𝐤𝐞𝐫 𝐤𝐞 𝐫𝐮𝐩 𝐦𝐞𝐢𝐧 𝐬𝐞𝐭 𝐤𝐚𝐫𝐧𝐚 𝐡𝐚𝐢. 💖")
-        return
-    JOIN_STICKER_ID = context.args[0]
-    await update.message.reply_text(f"✅ 𝐖𝐞𝐥𝐜𝐨𝐦𝐞 𝐬𝐭𝐢𝐜𝐤𝐞𝐫 𝐈𝐃 𝐬𝐞𝐭 𝐡𝐨 𝐠𝐚𝐢𝐥: `{JOIN_STICKER_ID}`. 𝐀𝐛 𝐧𝐚𝐲𝐞 𝐦𝐞𝐦𝐛𝐞𝐫𝐬 𝐤𝐨 𝐞𝐡 𝐬𝐭𝐢𝐜𝐤𝐞𝐫 𝐦𝐢𝐥𝐞𝐠𝐚! 🎉", parse_mode="Markdown")
 
 async def set_leave_sticker(update: Update, context: ContextTypes.DEFAULT_TYPE):
     global LEAVE_STICKER_ID
-    if not context.args:
+    if context.args:
+        LEAVE_STICKER_ID = context.args[0]
+        await update.message.reply_text(f"✅ 𝐍𝐚𝐲𝐚 𝐋𝐞𝐚𝐯𝐞 𝐒𝐭𝐢𝐜𝐤𝐞𝐫 𝐈𝐃 𝐬𝐞𝐭 𝐤𝐚𝐫 𝐝𝐞𝐞𝐧𝐢: `{LEAVE_STICKER_ID}`. 💔 𝐀𝐛 𝐣𝐚𝐨! 🚪", parse_mode="Markdown")
+    else:
         await update.message.reply_text("𝐊𝐫𝐢𝐩𝐲𝐚 𝐬𝐭𝐢𝐜𝐤𝐞𝐫 𝐈𝐃 𝐝𝐞𝐢𝐧 𝐣𝐢𝐬𝐞 𝐥𝐞𝐚𝐯𝐞 𝐬𝐭𝐢𝐜𝐤𝐞𝐫 𝐤𝐞 𝐫𝐮𝐩 𝐦𝐞𝐢𝐧 𝐬𝐞𝐭 𝐤𝐚𝐫𝐧𝐚 𝐡𝐚𝐢. 💔")
-        return
-    LEAVE_STICKER_ID = context.args[0]
-    await update.message.reply_text(f"✅ 𝐋𝐞𝐚𝐯𝐞 𝐬𝐭𝐢𝐜𝐤𝐞𝐫 𝐈𝐃 𝐬𝐞𝐭 𝐡𝐨 𝐠𝐚𝐢𝐥: `{LEAVE_STICKER_ID}`. 𝐀𝐛 𝐣𝐚𝐚𝐧𝐞 𝐰𝐚𝐥𝐞 𝐦𝐞𝐦𝐛𝐞𝐫𝐬 𝐤𝐨 𝐞𝐡 𝐬𝐭𝐢𝐜𝐤𝐞𝐫 𝐦𝐢𝐥𝐞𝐠𝐚! 🥺", parse_mode="Markdown")
-
 
 # --- Rules System Commands ---
 async def setrules(update: Update, context: ContextTypes.DEFAULT_TYPE):
     global rules_msg
-    if not context.args:
-        await update.message.reply_text("𝐍𝐢𝐲𝐚𝐦 𝐤𝐚𝐧𝐮𝐧 𝐥𝐢𝐤𝐡𝐨 𝐧𝐚! 📜 𝐒𝐚𝐛 𝐤𝐞 𝐥𝐢𝐲𝐞 𝐳𝐚𝐫𝐨𝐨𝐫𝐢 𝐛𝐚! 📝")
-        return
-    rules_msg = " ".join(context.args)
-    await update.message.reply_text(f"✅ 𝐍𝐢𝐲𝐚𝐦 𝐬𝐞𝐭 𝐡𝐨 𝐠𝐚𝐢𝐥:\n{rules_msg}\n\n𝐒𝐚𝐛 𝐦𝐢𝐥 𝐤𝐞 𝐫𝐚𝐡𝐨, 𝐘𝐚𝐫! 🤝 𝐃𝐢𝐬𝐜𝐢𝐩𝐥𝐢𝐧𝐞 𝐢𝐦𝐩𝐨𝐫𝐭𝐚𝐧𝐭 𝐛𝐚! 😌")
+    if context.args:
+        rules_msg = " ".join(context.args)
+        await update.message.reply_text(f"✅ 𝐍𝐢𝐲𝐚𝐦 𝐛𝐚𝐝𝐚𝐥 𝐝𝐞𝐞𝐧𝐢: `{rules_msg}`. 𝐍𝐚𝐲𝐚 𝐧𝐢𝐲𝐚𝐦 𝐚𝐛 𝐥𝐚𝐚𝐠𝐮 𝐡𝐨𝐠𝐚! 📜", parse_mode="Markdown")
+    else:
+        await update.message.reply_text(f"📜 𝐀𝐛𝐡𝐢 𝐤𝐞 𝐧𝐢𝐲𝐚𝐦 𝐡𝐚𝐢: `{rules_msg}`. 𝐍𝐚𝐲𝐚 𝐤𝐚 𝐥𝐢𝐤𝐡𝐚𝐢? ✍️", parse_mode="Markdown")
 
 async def rules(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(f"📜 𝐇𝐚𝐦𝐫𝐚 𝐧𝐢𝐲𝐚𝐦 𝐤𝐚𝐧𝐮𝐧:\n{rules_msg}\n\n𝐅𝐨𝐥𝐥𝐨𝐰 𝐤𝐚𝐫𝐨 𝐚𝐮𝐫 𝐜𝐡𝐚𝐦𝐤𝐨, 𝐣𝐞𝐞! ✨ 𝐍𝐨 𝐠𝐚𝐝𝐛𝐚𝐝𝐢! 🙅‍♀️")
+    await update.message.reply_text(f"📜 𝐇𝐮𝐦𝐫𝐚 𝐠𝐫𝐨𝐮𝐩𝐰𝐚 𝐤𝐞 𝐧𝐢𝐲𝐚𝐦 𝐲𝐞 𝐛𝐚:\n\n`{rules_msg}`\n\n𝐒𝐚𝐦𝐚𝐣𝐡 𝐤𝐞 𝐫𝐚𝐡𝐨, 𝐘𝐚𝐫! ⚖️", parse_mode="Markdown")
 
 async def cleanrules(update: Update, context: ContextTypes.DEFAULT_TYPE):
     global rules_msg
-    rules_msg = ""
-    await update.message.reply_text("✅ 𝐍𝐢𝐲𝐚𝐦 𝐤𝐚𝐧𝐮𝐧 𝐬𝐚𝐚𝐟 𝐡𝐨 𝐠𝐚𝐢𝐥. 𝐍𝐚𝐲𝐚 𝐚𝐝𝐯𝐞𝐧𝐭𝐮𝐫𝐞! 🌟 𝐀𝐛 𝐬𝐚𝐛 𝐤𝐡𝐮𝐥𝐥𝐚 𝐛𝐚! 🚀")
+    rules_msg = "📜 Be respectful. No spam."
+    await update.message.reply_text("✅ 𝐍𝐢𝐲𝐚𝐦 𝐬𝐚𝐚𝐟 𝐡𝐨 𝐠𝐚𝐢𝐥. 𝐃𝐞𝐟𝐚𝐮𝐥𝐭 𝐩𝐚𝐫 𝐚𝐚 𝐠𝐚𝐢𝐥𝐚! 🧹")
 
 # --- Message Tool Commands ---
 async def pin(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not update.message.reply_to_message:
-        await update.message.reply_text("𝐊𝐚𝐮𝐧 𝐦𝐞𝐬𝐬𝐚𝐠𝐞 𝐩𝐢𝐧 𝐤𝐚𝐫𝐞 𝐤𝐞 𝐛𝐚? 𝐑𝐞𝐩𝐥𝐲 𝐤𝐚𝐫𝐨! 📌 𝐁𝐡𝐮𝐥𝐢𝐲𝐨 𝐦𝐚𝐭! 💡")
-        return
-    try:
+    if update.message.reply_to_message:
         await update.message.reply_to_message.pin()
-        await update.message.reply_text("📌 𝐌𝐞𝐬𝐬𝐚𝐠𝐞 𝐩𝐢𝐧 𝐡𝐨 𝐠𝐚𝐢𝐥! 𝐁𝐚𝐡𝐮𝐭 𝐳𝐚𝐫𝐨𝐨𝐫𝐢 𝐛𝐚𝐚𝐭! ✨")
-    except Exception as e:
-        await update.message.reply_text(f"𝐌𝐞𝐬𝐬𝐚𝐠𝐞 𝐩𝐢𝐧 𝐧𝐚 𝐡𝐨 𝐩𝐚𝐲𝐚𝐥: {e} 😥 𝐊𝐮𝐜𝐡 𝐝𝐢𝐤𝐤𝐚𝐭 𝐛𝐚! 😔")
+        await update.message.reply_text("📌 𝐌𝐞𝐬𝐬𝐚𝐠𝐞 𝐩𝐢𝐧 𝐤𝐚𝐫 𝐝𝐞𝐞𝐧𝐢. 𝐒𝐚𝐛𝐤𝐨 𝐝𝐢𝐤𝐡𝐞𝐠𝐚! ⬆️")
+    else:
+        await update.message.reply_text("💬 𝐊𝐞𝐤𝐚 𝐩𝐢𝐧 𝐤𝐚𝐫𝐞 𝐤𝐞 𝐛𝐚? 𝐌𝐞𝐬𝐬𝐚𝐠𝐞 𝐩𝐚𝐫 𝐑𝐞𝐩𝐥𝐲 𝐤𝐚𝐫𝐨 𝐧𝐚! 👀")
 
 async def unpin(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
-        await context.bot.unpin_chat_message(update.effective_chat.id)
-        await update.message.reply_text("📍 𝐌𝐞𝐬𝐬𝐚𝐠𝐞 𝐮𝐧𝐩𝐢𝐧 𝐡𝐨 𝐠𝐚𝐢𝐥. 𝐒𝐚𝐛 𝐜𝐥𝐞𝐚𝐫! 💖 𝐅𝐫𝐞𝐞 𝐡𝐨 𝐠𝐚𝐢𝐥! 🥳")
+        # Unpinning the latest pinned message in the chat
+        await context.bot.unpin_chat_message(chat_id=update.effective_chat.id)
+        await update.message.reply_text("📍 𝐌𝐞𝐬𝐬𝐚𝐠𝐞 𝐮𝐧𝐩𝐢𝐧 𝐤𝐚𝐫 𝐝𝐞𝐞𝐧𝐢. 𝐀𝐛 𝐜𝐡𝐡𝐮𝐩 𝐣𝐚𝐲𝐞𝐠𝐚! ⬇️")
     except Exception as e:
         await update.message.reply_text(f"𝐌𝐞𝐬𝐬𝐚𝐠𝐞 𝐮𝐧𝐩𝐢𝐧 𝐧𝐚 𝐡𝐨 𝐩𝐚𝐲𝐚𝐥: {e} 😥 𝐊𝐮𝐜𝐡 𝐭𝐞𝐜𝐡𝐧𝐢𝐜𝐚𝐥 𝐢𝐬𝐬𝐮𝐞 𝐛𝐚! 👨‍💻")
 
 async def delete_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not update.message.reply_to_message:
-        await update.message.reply_text("𝐊𝐚𝐮𝐧 𝐦𝐞𝐬𝐬𝐚𝐠𝐞 𝐦𝐢𝐭𝐚𝐰𝐞 𝐤𝐞 𝐛𝐚? 𝐑𝐞𝐩𝐥𝐲 𝐤𝐚𝐫𝐨! 𝐏𝐨𝐨𝐟! 🪄")
-        return
-    try:
-        await update.message.reply_to_message.delete()
-        await update.message.reply_text("🗑️ 𝐌𝐞𝐬𝐬𝐚𝐠𝐞 𝐦𝐢𝐭 𝐠𝐚𝐢𝐥. 𝐉𝐚𝐢𝐬𝐞 𝐤𝐚𝐛𝐡𝐢 𝐭𝐡𝐚 𝐡𝐢 𝐧𝐚𝐡𝐢! ✨ 𝐆𝐚𝐲𝐚 𝐯𝐨! 💨")
-    except Exception as e:
-        await update.message.reply_text(f"𝐌𝐞𝐬𝐬𝐚𝐠𝐞 𝐦𝐢𝐭𝐚𝐧𝐞 𝐦𝐞𝐢𝐧 𝐝𝐢𝐤𝐤𝐚𝐭: {e} 😥 𝐎𝐡 𝐧𝐨! 😨")
+    if update.message.reply_to_message:
+        try:
+            await update.message.reply_to_message.delete()
+            await update.message.delete() # Also delete the command message
+            await update.message.reply_text("❌ 𝐌𝐞𝐬𝐬𝐚𝐠𝐞 𝐦𝐢𝐭𝐚 𝐝𝐞𝐞𝐧𝐢. 𝐒𝐚𝐚𝐟 𝐡𝐨 𝐠𝐚𝐢𝐥! 🗑️")
+        except Exception as e:
+            await update.message.reply_text(f"𝐌𝐞𝐬𝐬𝐚𝐠𝐞 𝐦𝐢𝐭𝐚𝐧𝐞 𝐦𝐞𝐢𝐧 𝐝𝐢𝐤𝐤𝐚𝐭: {e} 😥 𝐎𝐡 𝐧𝐨! 😨")
+    else:
+        await update.message.reply_text("💬 𝐊𝐞𝐤𝐚 𝐦𝐢𝐭𝐚𝐞 𝐤𝐞 𝐛𝐚? 𝐌𝐞𝐬𝐬𝐚𝐠𝐞 𝐩𝐚𝐫 𝐑𝐞𝐩𝐥𝐲 𝐤𝐚𝐫𝐨 𝐧𝐚! 👀")
 
 async def purge(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not update.message.reply_to_message and not context.args:
@@ -492,18 +520,22 @@ async def purge(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("✅ 𝐒𝐚𝐛 𝐬𝐚𝐚𝐟 𝐡𝐨 𝐠𝐚𝐢𝐥. 𝐂𝐡𝐚𝐦𝐜𝐡𝐚𝐦𝐚𝐭𝐚! 💖 𝐄𝐤 𝐝𝐚𝐦 𝐧𝐚𝐲𝐚! 💫")
 
 
+service_message_enabled = True # New configuration for service messages
 async def cleanservice(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    global service_message_enabled
     if not context.args:
-        await update.message.reply_text("𝐒𝐞𝐫𝐯𝐢𝐜𝐞 𝐦𝐞𝐬𝐬𝐚𝐠𝐞 𝐬𝐚𝐚𝐟 𝐤𝐚𝐫𝐞 𝐤𝐞 𝐛𝐚 𝐲𝐚 𝐧𝐚𝐡𝐢? [𝐨𝐧|𝐨𝐟𝐟] 𝐃𝐡𝐚𝐧𝐠 𝐬𝐞 𝐛𝐚𝐭𝐚𝐨! 🧹")
+        await update.message.reply_text(f"🧹 𝐒𝐞𝐫𝐯𝐢𝐜𝐞 𝐦𝐞𝐬𝐬𝐚𝐠𝐞 𝐚𝐛𝐡𝐢 {'𝐜𝐡𝐚𝐥𝐮 𝐛𝐚' if service_message_enabled else '𝐛𝐚𝐧𝐝 𝐛𝐚'}. '𝐨𝐧' 𝐲𝐚 '𝐨𝐟𝐟' 𝐬𝐞 𝐛𝐚𝐝𝐥𝐨. 💬")
         return
-    arg = context.args[0].lower()
-    if arg == "on":
-        # Note: This functionality requires an actual filter for service messages to be implemented in handle_messages
-        await update.message.reply_text("✅ 𝐒𝐞𝐫𝐯𝐢𝐜𝐞 𝐦𝐞𝐬𝐬𝐚𝐠𝐞 𝐬𝐚𝐚𝐟 𝐤𝐚𝐫𝐧𝐚 𝐜𝐡𝐚𝐥𝐮 𝐡𝐨 𝐠𝐚𝐢𝐥. 𝐊𝐨𝐧𝐨 𝐠𝐚𝐝𝐛𝐚𝐝 𝐧𝐚𝐡𝐢! 🧼 𝐅𝐮𝐥𝐥 𝐜𝐥𝐞𝐚𝐧𝐢𝐧𝐠! 💖")
-    elif arg == "off":
-        await update.message.reply_text("✅ 𝐒𝐞𝐫𝐯𝐢𝐜𝐞 𝐦𝐞𝐬𝐬𝐚𝐠𝐞 𝐬𝐚𝐚𝐟 𝐤𝐚𝐫𝐧𝐚 𝐛𝐚𝐧𝐝 𝐡𝐨 𝐠𝐚𝐢𝐥. 𝐀𝐛 𝐬𝐚𝐛 𝐝𝐞𝐤𝐡𝐨! 🤪 𝐌𝐚𝐬𝐭𝐢 𝐤𝐚𝐫𝐨! 😂")
+    
+    state = context.args[0].lower()
+    if state == "on":
+        service_message_enabled = True
+        await update.message.reply_text("✅ 𝐒𝐞𝐫𝐯𝐢𝐜𝐞 𝐦𝐞𝐬𝐬𝐚𝐠𝐞 𝐬𝐚𝐚𝐟 𝐤𝐚𝐫𝐧𝐚 𝐜𝐡𝐚𝐥𝐮 𝐡𝐨 𝐠𝐚𝐢𝐥. 🧹 𝐆𝐫𝐨𝐮𝐩 𝐬𝐚𝐚𝐟 𝐫𝐚𝐡𝐞𝐠𝐚! ✨")
+    elif state == "off":
+        service_message_enabled = False
+        await update.message.reply_text("❌ 𝐒𝐞𝐫𝐯𝐢𝐜𝐞 𝐦𝐞𝐬𝐬𝐚𝐠𝐞 𝐬𝐚𝐚𝐟 𝐤𝐚𝐫𝐧𝐚 𝐛𝐚𝐧𝐝 𝐡𝐨 𝐠𝐚𝐢𝐥. 𝐌𝐞𝐬𝐬𝐚𝐠𝐞 𝐝𝐢𝐤𝐡𝐞𝐧𝐠𝐞. 👁️")
     else:
-        await update.message.reply_text("🤦‍♀️ 𝐆𝐚𝐥𝐚𝐭 𝐛𝐚𝐚𝐭 𝐛𝐨𝐥𝐚𝐭 𝐡𝐨, 𝐏𝐲𝐚𝐚𝐫𝐞. '𝐨𝐧' 𝐲𝐚 '𝐨𝐟𝐟' 𝐛𝐨𝐥. 🎀 𝐒𝐚𝐦𝐚𝐣𝐡 𝐧𝐚𝐡𝐢 𝐚𝐚𝐭𝐚 𝐤𝐢 𝐤𝐲𝐚? 🙄")
+        await update.message.reply_text("🤦‍♀️ 𝐆𝐚𝐥𝐚𝐭 𝐛𝐚𝐚𝐭 𝐛𝐨𝐥𝐚𝐭 𝐡𝐨, 𝐌𝐚𝐡𝐚𝐫𝐚𝐣. '𝐨𝐧' 𝐲𝐚 '𝐨𝐟𝐟' 𝐛𝐨𝐥 𝐧𝐚. 💅")
 
 # --- New Command: /id ---
 async def get_ids(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -536,7 +568,7 @@ async def get_sticker_id_from_reply(update: Update, context: ContextTypes.DEFAUL
         sticker_id = update.message.reply_to_message.sticker.file_id
         await update.message.reply_text(f"🌠 𝐄 𝐬𝐭𝐢𝐜𝐤𝐞𝐫 𝐤𝐚 𝐈𝐃 𝐡𝐚𝐢: `{sticker_id}`. 𝐀𝐛 𝐢𝐬𝐞 𝐮𝐬𝐞 𝐤𝐚𝐫𝐨, 𝐘𝐚𝐫! ✨", parse_mode="Markdown")
     else:
-        await update.message.reply_text("🤦‍♀️ 𝐊𝐫𝐢𝐩𝐲𝐚 𝐤𝐢𝐬𝐢 𝐬𝐭𝐢𝐜𝐤𝐞𝐫 𝐩𝐚𝐫 𝐫𝐞𝐩𝐥𝐲 𝐤𝐚𝐫𝐞𝐢𝐧 𝐈𝐃 𝐩𝐚𝐚𝐧𝐞 𝐤𝐞 𝐥𝐢𝐲𝐞. 💌")
+        await update.message.reply_text("🤦‍♀️ 𝐊𝐫𝐢𝐩𝐲𝐚 𝐤𝐢𝐬𝐢 𝐬𝐭𝐢𝐜𝐤𝐞𝐫 𝐩𝐚𝐫 𝐫𝐞𝐩𝐥𝐲 𝐤𝐚𝐫େ𝐢𝐧 𝐈𝐃 𝐩𝐚𝐚𝐧𝐞 𝐤𝐞 𝐥𝐢𝐲𝐞. 💌")
 
 
 # --- New Member Handler ---
@@ -623,34 +655,43 @@ async def left_member(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # --- Auto Link Filter Handler ---
 async def handle_links(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not banlink_enabled or not update.effective_message or not update.message.text:
-        return
-    msg = update.effective_message
-    if any(link in msg.text.lower() for link in ["http://", "https://", "t.me/", "telegram.me/"]):
-        user = msg.from_user
-        uid = user.id
-        username = f"@{user.username}" if user.username else user.full_name
-        try:
-            await msg.delete()
-        except Exception:
-                pass
-        warns[uid] = warns.get(uid, 0) + 1
-        if warns[uid] >= warn_limit:
+    if update.message.text and (update.message.parse_entities(types="url") or update.message.parse_entities(types="text_link")):
+        if banlink_enabled:
             try:
-                await context.bot.ban_chat_member(msg.chat.id, uid)
-                await context.bot.send_message(msg.chat.id, f"🚫 {username} 𝐤𝐞 {warn_limit} 𝐜𝐡𝐞𝐭𝐚𝐰𝐚𝐧𝐢 𝐤𝐞 𝐛𝐚𝐚𝐝 𝐧𝐢𝐤𝐚𝐥 𝐝𝐞𝐞𝐧𝐢. 𝐋𝐢𝐧𝐤 𝐛𝐡𝐞𝐣𝐧𝐚 𝐦𝐚𝐧𝐚 𝐡𝐚𝐢, 𝐌𝐚𝐡𝐚𝐫𝐚𝐣! 🙅‍♀️ 𝐑𝐮𝐥𝐞 𝐭𝐨𝐝𝐚! 💥")
-            except Exception:
-                pass
-        else:
-            await context.bot.send_message(msg.chat.id, f"⚠️ {username} 𝐤𝐞 𝐥𝐢𝐧𝐤 𝐛𝐡𝐞𝐣𝐥𝐞 𝐩𝐚𝐫 𝐜𝐡𝐞𝐭𝐚𝐰𝐚𝐧𝐢 𝐦𝐢𝐥𝐚al! [{warns[uid]}/{warn_limit}] 𝐋𝐢𝐧𝐤 𝐦𝐚𝐭 𝐛𝐡𝐞𝐣𝐨, 𝐌𝐢𝐭𝐫𝐚! 🎀 𝐀𝐠𝐥𝐢 𝐛𝐚𝐚𝐫 𝐬𝐞 𝐧𝐚𝐡𝐢! 🚫")
+                await update.message.delete()
+                await context.bot.send_message(
+                    chat_id=update.effective_chat.id,
+                    text="🚫 𝐘𝐚𝐫, 𝐞 𝐠𝐫𝐨𝐮𝐩𝐰𝐚 𝐦𝐞𝐢𝐧 𝐥𝐢𝐧𝐤 𝐛𝐡𝐞𝐣𝐧𝐚 𝐦𝐚𝐧𝐚 𝐛𝐚! 𝐑𝐮𝐥𝐞𝐬 𝐟𝐨𝐥𝐥𝐨𝐰 𝐤𝐚𝐫𝐨, 𝐣𝐞𝐞! 😠"
+                )
+            except Exception as e:
+                logger.error(f"Error deleting link message: {e}")
+    
+    # Blocklist filter
+    if update.message.text:
+        text = update.message.text.lower()
+        for word in blocklist:
+            if word in text:
+                try:
+                    if blocklist_mode == "mute":
+                        until_date = int(time.time()) + 3600
+                        perms = ChatPermissions(can_send_messages=False)
+                        await context.bot.restrict_chat_member(update.effective_chat.id, update.effective_user.id, permissions=perms, until_date=until_date)
+                        await update.message.reply_text(f"🔇 𝐀𝐩𝐧𝐞 𝐠𝐚𝐥𝐚𝐭 𝐬𝐡𝐚𝐛𝐝 𝐛𝐨𝐥𝐚𝐥, 𝐢𝐬𝐥𝐢𝐲𝐞 𝟏 𝐠𝐡𝐚𝐧𝐭𝐚 𝐤𝐞 𝐥𝐢𝐲𝐞 𝐜𝐡𝐮𝐩 𝐤𝐚𝐫𝐚 𝐝𝐞𝐞𝐧𝐢. 🤫 𝐒𝐚𝐦𝐚𝐣𝐡 𝐤𝐞 𝐛𝐨𝐥𝐨! 🤐")
+                    elif blocklist_mode == "ban":
+                        await context.bot.ban_chat_member(update.effective_chat.id, update.effective_user.id)
+                        await update.message.reply_text(f"🚫 𝐀𝐩𝐧𝐞 𝐠𝐚𝐥𝐚𝐭 𝐬𝐡𝐚𝐛𝐝 𝐛𝐨𝐥𝐚𝐥, 𝐢𝐬𝐥𝐢𝐲𝐞 𝐧𝐢𝐤𝐚𝐥 𝐝𝐞𝐞𝐧𝐢. 𝐂𝐡𝐚𝐥 𝐧𝐢𝐤𝐚𝐥! 💔 👋")
+                    await update.message.delete()
+                except Exception as e:
+                    logger.error(f"Error handling blocklist: {e}")
+                break # Only act on the first blocked word found
 
-# --- Fallback Help for "help" in Group Chats ---
 async def fallback_help(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.message.text.lower().strip() == "help":
+    if update.message.text and "help" in update.message.text.lower():
         await help_cmd(update, context)
 
-# --- Main Bot Launcher ---
+# --- Main function to set up the bot ---
 async def main():
+    # Build the application
     app = ApplicationBuilder().token(TOKEN).build()
 
     # General commands
@@ -673,7 +714,7 @@ async def main():
     app.add_handler(CommandHandler("resetwarns", resetwarns))
     app.add_handler(CommandHandler("setwarnlimit", setwarnlimit))
     app.add_handler(CommandHandler("ban", ban_user))
-    app.add_handler(CommandHandler("unban", unban_user)) 
+    app.add_handler(CommandHandler("unban", unban_user))
     app.add_handler(CommandHandler("kick", kick_user))
     app.add_handler(CommandHandler("mute", mute_user))
     app.add_handler(CommandHandler("unmute", unmute_user))
@@ -688,9 +729,9 @@ async def main():
     app.add_handler(CommandHandler("unlock", unlock))
 
     # Spam filter commands
-    app.add_handler(CommandHandler("banlink", banlink))
-    app.add_handler(CommandHandler("blocklist", blocklist_cmd))
-    app.add_handler(CommandHandler("blocklistmode", blocklist_mode_cmd))
+    app.add_handler(CommandHandler("banlink", banlink_toggle))
+    app.add_handler(CommandHandler("blocklist", blocklist_cmd)) 
+    app.add_handler(CommandHandler("blocklistmode", blocklist_mode_cmd)) 
 
     # Welcome system commands
     app.add_handler(CommandHandler("welcome", welcome))
@@ -727,12 +768,16 @@ async def launch():
 
 if __name__ == "__main__":
     try:
+        # Check if an event loop is already running, if not, create a new one
         try:
             loop = asyncio.get_running_loop()
-            loop.create_task(main())
         except RuntimeError:
-            new_loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(new_loop)
-            new_loop.run_until_complete(main())
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+        
+        loop.run_until_complete(main())
     except KeyboardInterrupt:
-        pass
+        print("Bot stopped by user.", file=sys.stderr)
+    except Exception as e:
+        print(f"An unexpected error occurred during bot launch: {e}", file=sys.stderr)
+
