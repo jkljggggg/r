@@ -1617,10 +1617,12 @@ async def main():
         # Run polling without closing the event loop.
         await app.run_polling(close_loop=False)
 
+# --- Launcher ---# ... (rest of your code above this section, ensuring proper indentation)
+
 # --- Launcher ---
 async def launch():
     try:
-        await main()
+        await main() # Assuming 'main' function is defined elsewhere and handles bot polling
     except Exception as e:
         print(f"Bot crashed: {e}", file=sys.stderr)
 
@@ -1637,4 +1639,4 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("Bot stopped by user.", file=sys.stderr)
     except Exception as e:
-        print(f"An unexpected error occurred at startup: {e}", file=sys.stderr)
+        print(f"An unexpected error occurred during startup: {e}", file=sys.stderr)
