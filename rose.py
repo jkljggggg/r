@@ -1617,12 +1617,13 @@ async def main():
         # Run polling without closing the event loop.
         await app.run_polling(close_loop=False)
 
-# --- Launcher ---# ... (rest of your code above this section, ensuring proper indentation)
+    except Exception as e:
+        logger.error(f"Error in main function: {e}")
 
 # --- Launcher ---
 async def launch():
     try:
-        await main() # Assuming 'main' function is defined elsewhere and handles bot polling
+        await main()
     except Exception as e:
         print(f"Bot crashed: {e}", file=sys.stderr)
 
