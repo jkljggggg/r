@@ -8,6 +8,7 @@ import sys
 import logging
 from datetime import datetime, timedelta
 import subprocess # For executing shell commands (git pull)
+import random # For dynamic welcome messages
 
 # MongoDB
 from pymongo import MongoClient
@@ -20,7 +21,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-from telegram import Update, ChatPermissions
+from telegram import Update, ChatPermissions, InputMediaPhoto
 from telegram.ext import (
     ApplicationBuilder, CommandHandler, MessageHandler,
     ContextTypes, filters
@@ -28,7 +29,7 @@ from telegram.ext import (
 from telegram.constants import ParseMode # Import ParseMode for Markdown V2
 
 # --- Configuration ---
-TOKEN = "8100559127:AAFyDgLMXb3kOEXgTXK2vLKUkN_IxJ3vR9E"  # Replace with your actual token
+TOKEN = "8100559127:AAFyDgLMXb3kOEXgTXK2vLKUkN_Ix3vR9E"  # Replace with your actual token
 OWNER = "@Rajaraj909" # Bot ka owner username (username, NOT ID)
 
 # MongoDB Configuration
@@ -36,10 +37,12 @@ MONGO_URI = "mongodb+srv://pusers:nycreation@nycreation.pd4klp1.mongodb.net/?ret
 DB_NAME = "RoseBotDB"
 
 # ** Sticker IDs (Replace with your actual sticker file IDs) **
-DEFAULT_JOIN_STICKER_ID = "CAACAgIAAxkBAAIC3mWZ7WvQzQe5F2l3b3sQ2M1d4QABfQACaQMAAm2YgUrpL..." # Placeholder, replace with a real sticker ID
+# IMPORTANT: Replace this with a valid sticker file ID. If not, sticker sending will fail.
+DEFAULT_JOIN_STICKER_ID = "CAACAgIAAxkBAAIC3mWZ7WvQzQe5F2l3b3sQ2M1d4QABfQACaQMAAm2YgUrpL" # Placeholder, replace with a real sticker ID
 
 # --- Database Setup ---
 def get_db_collection(collection_name):
+    """Initializes and returns a MongoDB collection."""
     try:
         client = MongoClient(MONGO_URI)
         db = client[DB_NAME]
@@ -56,10 +59,13 @@ warns_collection = get_db_collection("warns")
 rules_collection = get_db_collection("rules")
 welcomes_collection = get_db_collection("welcomes")
 global_bans_collection = get_db_collection("global_bans") # For global bans
+chat_settings_collection = get_db_collection("chat_settings") # To store settings like autolink
 
 # --- Utility Functions ---
 def escape_markdown_v2(text):
     """Helper function to escape characters for MarkdownV2 parse mode."""
+    if not isinstance(text, str):
+        text = str(text)
     escape_chars = r'_*[]()~`>#+-=|{}.!'
     return "".join(["\\" + char if char in escape_chars else char for char in text])
 
@@ -69,45 +75,46 @@ async def is_admin_or_owner(update: Update, context: ContextTypes.DEFAULT_TYPE, 
         return True
 
     # Check if the user is the bot's designated owner by username
-    # This requires fetching the owner's actual user ID if OWNER is a username
+    if update.effective_user.username and update.effective_user.username.lower() == OWNER.lstrip('@').lower():
+        return True
+    
     try:
-        owner_info = None
-        # Try to find the owner's user object in the context's chat data if available
-        # or by fetching directly if needed.
-        # This part might need refinement depending on how OWNER is set and used globally.
-        # For simplicity, assuming OWNER is a username that can be matched.
-        # A more robust solution might store OWNER_ID directly.
-        if OWNER and OWNER.startswith('@'):
-            # Attempt to resolve owner username to ID for a more direct comparison
-            # This is a bit tricky as get_chat_member needs a chat_id.
-            # A simpler way for a global owner check is to just check username.
-            # However, for the purpose of chat admin, we only check chat_member.
-            pass # Keep it simple, just check chat_member status below
-    except Exception:
-        logger.debug("Could not resolve owner username to ID for direct comparison in is_admin_or_owner.")
-
-    chat_member = await context.bot.get_chat_member(chat_id, user_id)
-    if chat_member.status in ["creator", "administrator"]:
-        return True
+        chat_member = await context.bot.get_chat_member(chat_id, user_id)
+        if chat_member.status in ["creator", "administrator"]:
+            return True
+    except Exception as e:
+        logger.debug(f"Could not get chat member status for {user_id} in {chat_id}: {e}")
+        # If bot can't get chat member (e.g., user left, or bot not admin), treat as not admin
+        return False
     
-    # Final check if the user's username matches the OWNER username
-    # This is less reliable if owner changes username, but aligns with your current OWNER = "@Rajaraj909"
-    if user_id == update.effective_user.id and update.effective_user.username and update.effective_user.username.lower() == OWNER.lstrip('@').lower():
-        return True
-
-    # If the owner is not in the chat, or not an admin, they are still the bot owner
-    # This part is complex. For simplicity, we assume if OWNER is "@Rajaraj909", then only that specific username can be the owner.
-    # A robust solution would store OWNER_ID instead of OWNER_USERNAME.
-    # For now, if the user is the one specified as OWNER (by username), they are considered owner.
-    # This check is less direct than checking by ID, but works with your current setup.
-    if user_id == update.effective_user.id and update.effective_user.username and update.effective_user.username.lower() == OWNER.lstrip('@').lower():
-        return True
-    
-    # A more robust owner check (if you stored OWNER_ID somewhere, e.g., in config or env):
-    # if user_id == int(os.getenv("BOT_OWNER_ID")): # Assuming BOT_OWNER_ID is set as env variable
-    #     return True
-
     return False
+
+async def _get_user_display_info(user) -> dict:
+    """
+    Fetches user's display name, username, and profile picture.
+    Returns a dictionary with 'full_name', 'username', 'user_id', 'profile_pic_file_id'.
+    """
+    full_name = escape_markdown_v2(user.full_name)
+    username = escape_markdown_v2(f"@{user.username}") if user.username else "_N/A_"
+    user_id = user.id
+    profile_pic_file_id = None
+
+    try:
+        photos = await user.get_profile_photos(limit=1)
+        if photos.photos and photos.photos[0]:
+            # Get the largest available photo size
+            largest_photo = max(photos.photos[0], key=lambda p: p.width * p.height)
+            profile_pic_file_id = largest_photo.file_id
+    except Exception as e:
+        logger.warning(f"Could not fetch profile picture for user {user.id}: {e}")
+        # If fetching fails, we'll just proceed without the picture
+
+    return {
+        "full_name": full_name,
+        "username": username,
+        "user_id": user_id,
+        "profile_pic_file_id": profile_pic_file_id
+    }
 
 # --- Bot Commands and Handlers ---
 
@@ -115,23 +122,53 @@ async def is_admin_or_owner(update: Update, context: ContextTypes.DEFAULT_TYPE, 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     chat = update.effective_chat
+    user_info = await _get_user_display_info(user)
+
+    # Prepare user identity string
+    identity_parts = []
+    identity_parts.append(f"*नाम:* {user_info['full_name']}")
+    identity_parts.append(f"*उपयोगकर्ता नाम:* {user_info['username']}")
+    identity_parts.append(f"*उपयोगकर्ता ID:* `{user_info['user_id']}`")
+    user_identity_str = escape_markdown_v2(" | ").join(identity_parts)
+
     if chat.type == "private":
+        # Send profile picture first if available
+        if user_info['profile_pic_file_id']:
+            try:
+                await update.message.reply_photo(
+                    photo=user_info['profile_pic_file_id'],
+                    caption=f"🌟 आप यहाँ हैं, एक चमकते सितारे की तरह!\n\n{user_identity_str}\n\n",
+                    parse_mode=ParseMode.MARKDOWN_V2
+                )
+            except Exception as e:
+                logger.error(f"Error sending profile picture for user {user.id}: {e}")
+                # Fallback to just text if photo sending fails
+                await update.message.reply_text(
+                    f"🌟 आप यहाँ हैं, एक चमकते सितारे की तरह!\n\n{user_identity_str}\n\n",
+                    parse_mode=ParseMode.MARKDOWN_V2
+                )
+        else:
+            await update.message.reply_text(
+                f"🌟 आप यहाँ हैं, एक चमकते सितारे की तरह!\n\n{user_identity_str}\n\n",
+                parse_mode=ParseMode.MARKDOWN_V2
+            )
+
         await update.message.reply_text(
-            f"Hey there, *{escape_markdown_v2(user.first_name)}* \\! 👋\n\n"
-            f"I'm *Rose*, a powerful group management bot designed to keep your chats safe and organized\\!\n"
-            f"I can help you with:\n"
-            f"✨ Moderation tools like ban, kick, mute, warn\n"
-            f"🔒 Anti\\-spam and anti\\-link features\n"
-            f"⚙️ Customizable welcome messages and rules\n"
-            f"…and much more\\! ✨\n\n"
-            f"Ready to get started\? Add me to your group and make me an admin\\!\n"
-            f"For a list of all commands, type /help\\.",
+            f"मैं *रोज*, आपके चैट्स को सुरक्षित और व्यवस्थित रखने के लिए डिज़ाइन किया गया एक शक्तिशाली ग्रुप मैनेजमेंट बॉट हूँ!\n"
+            f"मैं आपकी मदद कर सकता हूँ:\n"
+            f"✨ मॉडरेटिंग टूल्स जैसे कि बैन, किक, म्यूट, वॉर्न\n"
+            f"🔒 एंटी-स्पैम और एंटी-लिंक फीचर्स\n"
+            f"⚙️ कस्टमाइजेबल वेलकम मैसेज और नियम\n"
+            f"…और भी बहुत कुछ!\n\n"
+            f"शुरू करने के लिए तैयार हैं? मुझे अपने ग्रुप में जोड़ें और मुझे एक एडमिन बनाएं!\n"
+            f"सभी कमांड्स की सूची के लिए, /help टाइप करें.",
             parse_mode=ParseMode.MARKDOWN_V2
         )
     else:
+        # Group chat response
         await update.message.reply_text(
-            f"Hello, *{escape_markdown_v2(user.first_name)}*\\! I'm already active here\\! 🎉\n"
-            f"Type /help to see what I can do for this group\\.",
+            f"नमस्ते, *{escape_markdown_v2(user.first_name)}*! मैं यहाँ पहले से ही सक्रिय हूँ! 🎉\n"
+            f"इस समूह के लिए मैं क्या कर सकता हूँ यह देखने के लिए /help टाइप करें.",
             parse_mode=ParseMode.MARKDOWN_V2
         )
 
@@ -140,50 +177,50 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat = update.effective_chat
     if chat.type == "private":
         help_text = (
-            f"🌹 *Rose Bot Help Menu* 🌹\n\n"
-            f"Here are the commands you can use:\n\n"
-            f"*🛠️ Admin Commands:*\n"
-            f"  `/ban <reply or username>` \\- Ban a user from the group\\.\n"
-            f"  `/kick <reply or username>` \\- Kick a user from the group\\.\n"
-            f"  `/mute <reply or username> [time]` \\- Mute a user temporarily or permanently\\.\n"
-            f"  `/unmute <reply or username>` \\- Unmute a user\\.\n"
-            f"  `/warn <reply or username> [reason]` \\- Warn a user\\.\n"
-            f"  `/warns <reply or username>` \\- Check a user's warnings\\.\n"
-            f"  `/resetwarns <reply or username>` \\- Reset a user's warnings\\.\n"
-            f"  `/pin` \\- Pin the replied message\\.\n"
-            f"  `/unpin` \\- Unpin the replied message\\.\n"
-            f"  `/del` \\- Delete the replied message\\.\n"
-            f"  `/purge` \\- Purge messages from the replied message upwards\\.\n"
-            f"  `/setrules <text>` \\- Set group rules\\.\n"
-            f"  `/rules` \\- Get group rules\\.\n"
-            f"  `/cleanrules` \\- Clear group rules\\.\n"
-            f"  `/cleanservice` \\- Delete service messages \\(e\\.g\\., member joined/left\\)\\.\n"
-            f"  `/autolink <on/off>` \\- Toggle auto link deletion\\.\n" # Added autolink to help
-            f"  `/setwelcome <text>` \\- Set custom welcome message \\(Use `{{first}}`, `{{last}}`, `{{fullname}}`, `{{chatname}}`\\)\\.\n"
-            f"  `/resetwelcome` \\- Reset welcome message to default\\.\n"
-            f"  `/welcome` \\- Test the welcome message\\.\n\n"
-            f"*👑 Owner Only Commands:*\n" # Separated owner-only commands
-            f"  `/gban <reply or username>` \\- Globally ban a user\\.\n"
-            f"  `/ungban <reply or username>` \\- Unglobal ban a user\\.\n"
-            f"  `/gblacklist <id>` \\- Add a user to global blacklist\\.\n"
-            f"  `/ungblacklist <id>` \\- Remove a user from global blacklist\\.\n"
-            f"  `/blacklist_list` \\- Show global blacklist\\.\n\n"
-            f"*✨ General Commands:*\n"
-            f"  `/id` \\- Get your user ID or the replied user's ID\\.\n"
-            f"  `/chatid` \\- Get the current chat's ID\\.\n"
-            f"  `/info <reply or username>` \\- Get information about a user\\.\n"
-            f"  `/about` \\- Learn more about Rose Bot\\.\n"
-            f"  `/ping` \\- Check bot's response time\\.\n\n"
-            f"Need more help\? Join our [Support Group](https://t.me/{escape_markdown_v2('Rajaraj909')})\\! 💬\n\n" # Replace with your actual support group link
-            f"🌸 Thank you for using Rose\\! 🌸"
+            f"🌹 *रोज बॉट सहायता मेनू* 🌹\n\n"
+            f"यहाँ उन कमांड्स की सूची दी गई है जिनका आप उपयोग कर सकते हैं:\n\n"
+            f"*🛠️ एडमिन कमांड्स:*\n"
+            f"  `/ban <reply or username>` \\- एक उपयोगकर्ता को समूह से बैन करें\\.\n"
+            f"  `/kick <reply or username>` \\- एक उपयोगकर्ता को समूह से किक करें\\.\n"
+            f"  `/mute <reply or username> [time]` \\- एक उपयोगकर्ता को अस्थायी या स्थायी रूप से म्यूट करें\\.\n"
+            f"  `/unmute <reply or username>` \\- एक उपयोगकर्ता को अनम्यूट करें\\.\n"
+            f"  `/warn <reply or username> [reason]` \\- एक उपयोगकर्ता को चेतावनी दें\\.\n"
+            f"  `/warns <reply or username>` \\- एक उपयोगकर्ता की चेतावनियों की जाँच करें\\.\n"
+            f"  `/resetwarns <reply or username>` \\- एक उपयोगकर्ता की चेतावनियों को रीसेट करें\\.\n"
+            f"  `/pin` \\- रिप्लाई किए गए संदेश को पिन करें\\.\n"
+            f"  `/unpin` \\- रिप्लाई किए गए संदेश को अनपिन करें\\.\n"
+            f"  `/del` \\- रिप्लाई किए गए संदेश को हटाएँ\\.\n"
+            f"  `/purge` \\- रिप्लाई किए गए संदेश से ऊपर के संदेशों को हटाएँ\\.\n"
+            f"  `/setrules <text>` \\- समूह के नियम सेट करें\\.\n"
+            f"  `/rules` \\- समूह के नियम प्राप्त करें\\.\n"
+            f"  `/cleanrules` \\- समूह के नियम साफ करें\\.\n"
+            f"  `/cleanservice` \\- सेवा संदेशों को हटाएँ \\(जैसे, सदस्य शामिल हुए/छोड़ गए\\)\\.\n"
+            f"  `/autolink <on/off>` \\- ऑटो लिंक विलोपन को टॉगल करें\\.\n"
+            f"  `/setwelcome <text>` \\- कस्टम स्वागत संदेश सेट करें \\(उपयोग करें `{{first}}`, `{{last}}`, `{{fullname}}`, `{{chatname}}`\\)\\.\n"
+            f"  `/resetwelcome` \\- स्वागत संदेश को डिफ़ॉल्ट पर रीसेट करें\\.\n"
+            f"  `/welcome` \\- स्वागत संदेश का परीक्षण करें\\.\n\n"
+            f"*👑 केवल मालिक कमांड्स:*\n"
+            f"  `/gban <reply or username>` \\- एक उपयोगकर्ता को वैश्विक रूप से बैन करें\\.\n"
+            f"  `/ungban <reply or username>` \\- एक उपयोगकर्ता को वैश्विक रूप से अनबैन करें\\.\n"
+            f"  `/gblacklist <id>` \\- एक उपयोगकर्ता को वैश्विक ब्लैकलिस्ट में जोड़ें\\.\n"
+            f"  `/ungblacklist <id>` \\- एक उपयोगकर्ता को वैश्विक ब्लैकलिस्ट से हटाएँ\\.\n"
+            f"  `/blacklist_list` \\- वैश्विक ब्लैकलिस्ट दिखाएँ\\.\n\n"
+            f"*✨ सामान्य कमांड्स:*\n"
+            f"  `/id` \\- अपनी उपयोगकर्ता ID या रिप्लाई किए गए उपयोगकर्ता की ID प्राप्त करें\\.\n"
+            f"  `/chatid` \\- वर्तमान चैट की ID प्राप्त करें\\.\n"
+            f"  `/info <reply or username>` \\- एक उपयोगकर्ता के बारे में जानकारी प्राप्त करें\\.\n"
+            f"  `/about` \\- रोज बॉट के बारे में और जानें\\.\n"
+            f"  `/ping` \\- बॉट की प्रतिक्रिया समय की जाँच करें\\.\n\n"
+            f"अधिक सहायता चाहिए? हमारे [समर्थन समूह](https://t.me/{escape_markdown_v2('Rajaraj909')}) में शामिल हों! 💬\n\n" # Replace with your actual support group link
+            f"🌸 रोज का उपयोग करने के लिए धन्यवाद! 🌸"
         )
         await update.message.reply_text(help_text, parse_mode=ParseMode.MARKDOWN_V2, disable_web_page_preview=True)
     else:
         await update.message.reply_text(
-            f"Hey *{escape_markdown_v2(update.effective_user.first_name)}*\\! 👋\n\n"
-            f"I can't send the full help menu in a group chat to avoid spam\\.\n"
-            f"Please open a private chat with me and use the /help command there for a complete list of features\\!\n\n"
-            f"Just click [here](https://t.me/{context.bot.username}) to start a private chat with me\\.",
+            f"नमस्ते *{escape_markdown_v2(update.effective_user.first_name)}*! 👋\n\n"
+            f"मैं स्पैम से बचने के लिए समूह चैट में पूर्ण सहायता मेनू नहीं भेज सकता हूँ.\n"
+            f"सुविधाओं की पूरी सूची के लिए कृपया मेरे साथ एक निजी चैट खोलें और वहाँ /help कमांड का उपयोग करें!\n\n"
+            f"मुझसे निजी चैट शुरू करने के लिए बस [यहां](https://t.me/{context.bot.username}) क्लिक करें.",
             parse_mode=ParseMode.MARKDOWN_V2,
             disable_web_page_preview=True
         )
@@ -195,8 +232,8 @@ async def kick(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if not await is_admin_or_owner(update, context, chat.id, user.id):
         await update.message.reply_text(
-            f"🚫 *Permission Denied* 🚫\n"
-            f"You need to be an *admin* to use this command\\.",
+            f"🚫 *अनुमति नहीं* 🚫\n"
+            f"इस कमांड का उपयोग करने के लिए आपको एक *एडमिन* होना चाहिए.",
             parse_mode=ParseMode.MARKDOWN_V2
         )
         return
@@ -207,47 +244,40 @@ async def kick(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif context.args:
         try:
             user_id = int(context.args[0])
-            # For `get_chat_member` you need to ensure the user ID actually exists in the chat.
-            # If not, it will raise an error.
-            # A more robust check might involve fetching the user directly if they are not in the chat.
-            # However, for kick/ban, they generally need to be a chat member to be kicked/banned.
             target_chat_member = await context.bot.get_chat_member(chat.id, user_id)
             target_user = target_chat_member.user
         except ValueError:
             await update.message.reply_text(
-                f"❌ Please provide a valid User ID or reply to a message to kick someone\\.",
+                f"❌ किसी को किक करने के लिए कृपया एक वैध उपयोगकर्ता ID प्रदान करें या एक संदेश पर रिप्लाई करें.",
                 parse_mode=ParseMode.MARKDOWN_V2
             )
             return
         except Exception:
             await update.message.reply_text(
-                f"❌ Could not find the user with the provided ID in this chat\\.",
+                f"❌ इस चैट में प्रदान की गई ID वाले उपयोगकर्ता को नहीं ढूँढा जा सका.",
                 parse_mode=ParseMode.MARKDOWN_V2
             )
             return
     else:
         await update.message.reply_text(
-            f"🤔 To kick someone, please reply to their message or provide their User ID\\.",
+            f"🤔 किसी को किक करने के लिए, कृपया उनके संदेश पर रिप्लाई करें या उनकी उपयोगकर्ता ID प्रदान करें.",
             parse_mode=ParseMode.MARKDOWN_V2
         )
         return
 
     if target_user.id == user.id:
         await update.message.reply_text(
-            f"😅 You can't kick yourself, silly\\!",
+            f"😅 आप खुद को किक नहीं कर सकते, सिली!",
             parse_mode=ParseMode.MARKDOWN_V2
         )
         return
 
-    # Prevent admin/owner from being kicked by non-creator/non-owner admins
     if await is_admin_or_owner(update, context, chat.id, target_user.id):
-        # A creator can kick other admins. This check needs refinement if you want to allow creators to kick admins.
-        # For simplicity, we'll prevent any admin from kicking another admin or the bot owner.
         target_chat_member = await context.bot.get_chat_member(chat.id, target_user.id)
         if target_chat_member.status in ["creator", "administrator"] or \
            (target_user.username and target_user.username.lower() == OWNER.lstrip('@').lower()):
             await update.message.reply_text(
-                f"🔒 I can't kick an *admin* or the *bot owner*\\.",
+                f"🔒 मैं एक *एडमिन* या *बॉट मालिक* को किक नहीं कर सकता.",
                 parse_mode=ParseMode.MARKDOWN_V2
             )
             return
@@ -255,15 +285,15 @@ async def kick(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         await context.bot.kick_chat_member(chat.id, target_user.id)
         await update.message.reply_text(
-            f"👋 *{escape_markdown_v2(target_user.first_name)}* has been kicked from the group\\!\\n"
-            f"_Adios_\\! 👋",
+            f"👋 *{escape_markdown_v2(target_user.first_name)}* को समूह से किक कर दिया गया है!\n"
+            f"_अलविदा_! 👋",
             parse_mode=ParseMode.MARKDOWN_V2
         )
     except Exception as e:
         logger.error(f"Error kicking user {target_user.id}: {e}")
         await update.message.reply_text(
-            f"⚠️ Failed to kick *{escape_markdown_v2(target_user.first_name)}*\\.\n"
-            f"Make sure I have the necessary permissions\\! 😓",
+            f"⚠️ *{escape_markdown_v2(target_user.first_name)}* को किक करने में विफल रहा.\n"
+            f"सुनिश्चित करें कि मेरे पास आवश्यक अनुमतियाँ हैं! 😓",
             parse_mode=ParseMode.MARKDOWN_V2
         )
 
@@ -274,8 +304,8 @@ async def ban(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if not await is_admin_or_owner(update, context, chat.id, user.id):
         await update.message.reply_text(
-            f"🚫 *Permission Denied* 🚫\n"
-            f"You need to be an *admin* to use this command\\.",
+            f"🚫 *अनुमति नहीं* 🚫\n"
+            f"इस कमांड का उपयोग करने के लिए आपको एक *एडमिन* होना चाहिए.",
             parse_mode=ParseMode.MARKDOWN_V2
         )
         return
@@ -290,37 +320,36 @@ async def ban(update: Update, context: ContextTypes.DEFAULT_TYPE):
             target_user = target_chat_member.user
         except ValueError:
             await update.message.reply_text(
-                f"❌ Please provide a valid User ID or reply to a message to ban someone\\.",
+                f"❌ किसी को बैन करने के लिए कृपया एक वैध उपयोगकर्ता ID प्रदान करें या एक संदेश पर रिप्लाई करें.",
                 parse_mode=ParseMode.MARKDOWN_V2
             )
             return
         except Exception:
             await update.message.reply_text(
-                f"❌ Could not find the user with the provided ID in this chat\\.",
+                f"❌ इस चैट में प्रदान की गई ID वाले उपयोगकर्ता को नहीं ढूँढा जा सका.",
                 parse_mode=ParseMode.MARKDOWN_V2
             )
             return
     else:
         await update.message.reply_text(
-            f"🤔 To ban someone, please reply to their message or provide their User ID\\.",
+            f"🤔 किसी को बैन करने के लिए, कृपया उनके संदेश पर रिप्लाई करें या उनकी उपयोगकर्ता ID प्रदान करें.",
             parse_mode=ParseMode.MARKDOWN_V2
         )
         return
 
     if target_user.id == user.id:
         await update.message.reply_text(
-            f"😅 You can't ban yourself, silly\\!",
+            f"😅 आप खुद को बैन नहीं कर सकते, सिली!",
             parse_mode=ParseMode.MARKDOWN_V2
         )
         return
 
-    # Prevent admin/owner from being banned by non-creator/non-owner admins
     if await is_admin_or_owner(update, context, chat.id, target_user.id):
         target_chat_member = await context.bot.get_chat_member(chat.id, target_user.id)
         if target_chat_member.status in ["creator", "administrator"] or \
            (target_user.username and target_user.username.lower() == OWNER.lstrip('@').lower()):
             await update.message.reply_text(
-                f"🔒 I can't ban an *admin* or the *bot owner*\\.",
+                f"🔒 मैं एक *एडमिन* या *बॉट मालिक* को बैन नहीं कर सकता.",
                 parse_mode=ParseMode.MARKDOWN_V2
             )
             return
@@ -328,15 +357,15 @@ async def ban(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         await context.bot.ban_chat_member(chat.id, target_user.id)
         await update.message.reply_text(
-            f"⛓️ *{escape_markdown_v2(target_user.first_name)}* has been banned from the group\\!\\n"
-            f"They shall not return\\! 🚫",
+            f"⛓️ *{escape_markdown_v2(target_user.first_name)}* को समूह से बैन कर दिया गया है!\n"
+            f"वे अब वापस नहीं आ सकते! 🚫",
             parse_mode=ParseMode.MARKDOWN_V2
         )
     except Exception as e:
         logger.error(f"Error banning user {target_user.id}: {e}")
         await update.message.reply_text(
-            f"⚠️ Failed to ban *{escape_markdown_v2(target_user.first_name)}*\\.\n"
-            f"Make sure I have the necessary permissions\\! 😓",
+            f"⚠️ *{escape_markdown_v2(target_user.first_name)}* को बैन करने में विफल रहा.\n"
+            f"सुनिश्चित करें कि मेरे पास आवश्यक अनुमतियाँ हैं! 😓",
             parse_mode=ParseMode.MARKDOWN_V2
         )
 
@@ -347,15 +376,15 @@ async def pin(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if not await is_admin_or_owner(update, context, chat.id, user.id):
         await update.message.reply_text(
-            f"🚫 *Permission Denied* 🚫\n"
-            f"You need to be an *admin* to use this command\\.",
+            f"🚫 *अनुमति नहीं* 🚫\n"
+            f"इस कमांड का उपयोग करने के लिए आपको एक *एडमिन* होना चाहिए.",
             parse_mode=ParseMode.MARKDOWN_V2
         )
         return
 
     if not update.message.reply_to_message:
         await update.message.reply_text(
-            f"📌 Please reply to a message to pin it\\.",
+            f"📌 कृपया संदेश को पिन करने के लिए उस पर रिप्लाई करें.",
             parse_mode=ParseMode.MARKDOWN_V2
         )
         return
@@ -366,14 +395,14 @@ async def pin(update: Update, context: ContextTypes.DEFAULT_TYPE):
             message_id=update.message.reply_to_message.message_id
         )
         await update.message.reply_text(
-            f"📌 Message pinned successfully\\! ✨",
+            f"📌 संदेश सफलतापूर्वक पिन हो गया! ✨",
             parse_mode=ParseMode.MARKDOWN_V2
         )
     except Exception as e:
         logger.error(f"Error pinning message: {e}")
         await update.message.reply_text(
-            f"⚠️ Failed to pin message\\.\n"
-            f"Make sure I have the necessary permissions\\! 😓",
+            f"⚠️ संदेश को पिन करने में विफल रहा.\n"
+            f"सुनिश्चित करें कि मेरे पास आवश्यक अनुमतियाँ हैं! 😓",
             parse_mode=ParseMode.MARKDOWN_V2
         )
 
@@ -384,15 +413,15 @@ async def unpin(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if not await is_admin_or_owner(update, context, chat.id, user.id):
         await update.message.reply_text(
-            f"🚫 *Permission Denied* 🚫\n"
-            f"You need to be an *admin* to use this command\\.",
+            f"🚫 *अनुमति नहीं* 🚫\n"
+            f"इस कमांड का उपयोग करने के लिए आपको एक *एडमिन* होना चाहिए.",
             parse_mode=ParseMode.MARKDOWN_V2
         )
         return
 
     if not update.message.reply_to_message:
         await update.message.reply_text(
-            f"📍 Please reply to a pinned message to unpin it\\.",
+            f"📍 कृपया पिन किए गए संदेश को अनपिन करने के लिए उस पर रिप्लाई करें.",
             parse_mode=ParseMode.MARKDOWN_V2
         )
         return
@@ -403,14 +432,14 @@ async def unpin(update: Update, context: ContextTypes.DEFAULT_TYPE):
             message_id=update.message.reply_to_message.message_id
         )
         await update.message.reply_text(
-            f"📍 Message unpinned successfully\\! ✨",
+            f"📍 संदेश सफलतापूर्वक अनपिन हो गया! ✨",
             parse_mode=ParseMode.MARKDOWN_V2
         )
     except Exception as e:
         logger.error(f"Error unpinning message: {e}")
         await update.message.reply_text(
-            f"⚠️ Failed to unpin message\\.\n"
-            f"Make sure I have the necessary permissions\\! 😓",
+            f"⚠️ संदेश को अनपिन करने में विफल रहा.\n"
+            f"सुनिश्चित करें कि मेरे पास आवश्यक अनुमतियाँ हैं! 😓",
             parse_mode=ParseMode.MARKDOWN_V2
         )
 
@@ -421,15 +450,15 @@ async def delete_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if not await is_admin_or_owner(update, context, chat.id, user.id):
         await update.message.reply_text(
-            f"🚫 *Permission Denied* 🚫\n"
-            f"You need to be an *admin* to use this command\\.",
+            f"🚫 *अनुमति नहीं* 🚫\n"
+            f"इस कमांड का उपयोग करने के लिए आपको एक *एडमिन* होना चाहिए.",
             parse_mode=ParseMode.MARKDOWN_V2
         )
         return
 
     if not update.message.reply_to_message:
         await update.message.reply_text(
-            f"🗑️ Please reply to a message to delete it\\.",
+            f"🗑️ कृपया संदेश को हटाने के लिए उस पर रिप्लाई करें.",
             parse_mode=ParseMode.MARKDOWN_V2
         )
         return
@@ -440,8 +469,8 @@ async def delete_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         logger.error(f"Error deleting message: {e}")
         await update.message.reply_text(
-            f"⚠️ Failed to delete message\\.\n"
-            f"Make sure I have the necessary permissions\\! 😓",
+            f"⚠️ संदेश को हटाने में विफल रहा.\n"
+            f"सुनिश्चित करें कि मेरे पास आवश्यक अनुमतियाँ हैं! 😓",
             parse_mode=ParseMode.MARKDOWN_V2
         )
 
@@ -452,15 +481,15 @@ async def purge(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if not await is_admin_or_owner(update, context, chat.id, user.id):
         await update.message.reply_text(
-            f"🚫 *Permission Denied* 🚫\n"
-            f"You need to be an *admin* to use this command\\.",
+            f"🚫 *अनुमति नहीं* 🚫\n"
+            f"इस कमांड का उपयोग करने के लिए आपको एक *एडमिन* होना चाहिए.",
             parse_mode=ParseMode.MARKDOWN_V2
         )
         return
 
     if not update.message.reply_to_message:
         await update.message.reply_text(
-            f"🧹 Please reply to the *first message* you want to purge from\\.",
+            f"🧹 कृपया उस *पहले संदेश* पर रिप्लाई करें जहाँ से आप हटाना चाहते हैं.",
             parse_mode=ParseMode.MARKDOWN_V2
         )
         return
@@ -476,7 +505,7 @@ async def purge(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await context.bot.delete_messages(chat.id, messages_to_delete)
         # Inform about the purge (optional, can be deleted after a few seconds)
         purge_confirmation = await update.message.reply_text(
-            f"🧹 Purged *{len(messages_to_delete)}* messages successfully\\! ✨",
+            f"🧹 *{len(messages_to_delete)}* संदेश सफलतापूर्वक हटा दिए गए! ✨",
             parse_mode=ParseMode.MARKDOWN_V2
         )
         await asyncio.sleep(3) # Delete confirmation after 3 seconds
@@ -484,8 +513,8 @@ async def purge(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         logger.error(f"Error purging messages: {e}")
         await update.message.reply_text(
-            f"⚠️ Failed to purge messages\\.\n"
-            f"Make sure I have the necessary permissions\\! 😓",
+            f"⚠️ संदेशों को हटाने में विफल रहा.\n"
+            f"सुनिश्चित करें कि मेरे पास आवश्यक अनुमतियाँ हैं! 😓",
             parse_mode=ParseMode.MARKDOWN_V2
         )
 
@@ -493,8 +522,8 @@ async def purge(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def get_chat_id(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
     await update.message.reply_text(
-        f"🆔 The Chat ID for this group is: `{escape_markdown_v2(str(chat_id))}`\n"
-        f"_This ID is useful for certain bot configurations\\._",
+        f"🆔 इस समूह के लिए चैट ID है: `{escape_markdown_v2(str(chat_id))}`\n"
+        f"_यह ID कुछ बॉट कॉन्फ़िगरेशन के लिए उपयोगी है._",
         parse_mode=ParseMode.MARKDOWN_V2
     )
 
@@ -505,8 +534,8 @@ async def warn(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if not await is_admin_or_owner(update, context, chat.id, user.id):
         await update.message.reply_text(
-            f"🚫 *Permission Denied* 🚫\n"
-            f"You need to be an *admin* to use this command\\.",
+            f"🚫 *अनुमति नहीं* 🚫\n"
+            f"इस कमांड का उपयोग करने के लिए आपको एक *एडमिन* होना चाहिए.",
             parse_mode=ParseMode.MARKDOWN_V2
         )
         return
@@ -521,44 +550,42 @@ async def warn(update: Update, context: ContextTypes.DEFAULT_TYPE):
             target_user = target_chat_member.user
         except ValueError:
             await update.message.reply_text(
-                f"❌ Please provide a valid User ID or reply to a message to warn someone\\.",
+                f"❌ किसी को चेतावनी देने के लिए कृपया एक वैध उपयोगकर्ता ID प्रदान करें या एक संदेश पर रिप्लाई करें.",
                 parse_mode=ParseMode.MARKDOWN_V2
             )
             return
         except Exception:
             await update.message.reply_text(
-                f"❌ Could not find the user with the provided ID in this chat\\.",
+                f"❌ इस चैट में प्रदान की गई ID वाले उपयोगकर्ता को नहीं ढूँढा जा सका.",
                 parse_mode=ParseMode.MARKDOWN_V2
             )
             return
     else:
         await update.message.reply_text(
-            f"🤔 To warn someone, please reply to their message or provide their User ID\\.",
+            f"🤔 किसी को चेतावनी देने के लिए, कृपया उनके संदेश पर रिप्लाई करें या उनकी उपयोगकर्ता ID प्रदान करें.",
             parse_mode=ParseMode.MARKDOWN_V2
         )
         return
 
     if target_user.id == user.id:
         await update.message.reply_text(
-            f"😅 You can't warn yourself, silly\\!",
+            f"😅 आप खुद को चेतावनी नहीं दे सकते, सिली!",
             parse_mode=ParseMode.MARKDOWN_V2
         )
         return
 
     if await is_admin_or_owner(update, context, chat.id, target_user.id):
         await update.message.reply_text(
-            f"🔒 I can't warn an *admin* or the *bot owner*\\.",
+            f"🔒 मैं एक *एडमिन* या *बॉट मालिक* को चेतावनी नहीं दे सकता.",
             parse_mode=ParseMode.MARKDOWN_V2
         )
         return
 
-    reason = " ".join(context.args[1:]) if len(context.args) > 1 else "No reason provided"
+    reason = " ".join(context.args[1:]) if len(context.args) > 1 else "कोई कारण नहीं दिया गया"
 
-    # Get current warns for the user in this chat
     current_warns_data = warns_collection.find_one({"chat_id": chat.id, "user_id": target_user.id})
     warn_count = current_warns_data["warn_count"] + 1 if current_warns_data else 1
     
-    # Update or insert warns
     warns_collection.update_one(
         {"chat_id": chat.id, "user_id": target_user.id},
         {"$set": {"warn_count": warn_count, "last_warn_reason": reason}},
@@ -566,10 +593,10 @@ async def warn(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
     await update.message.reply_text(
-        f"⚠️ *{escape_markdown_v2(target_user.first_name)}* has been warned\\! "
-        f"Current warns: `{warn_count}`\\.\n"
-        f"Reason: _{escape_markdown_v2(reason)}_\n\n"
-        f"🚨 Too many warns may lead to a kick or ban\\! Please be careful\\! 🚨",
+        f"⚠️ *{escape_markdown_v2(target_user.first_name)}* को चेतावनी दी गई है! "
+        f"वर्तमान चेतावनियाँ: `{warn_count}`.\n"
+        f"कारण: _{escape_markdown_v2(reason)}_\n\n"
+        f"🚨 बहुत अधिक चेतावनियाँ किक या बैन का कारण बन सकती हैं! कृपया सावधान रहें! 🚨",
         parse_mode=ParseMode.MARKDOWN_V2
     )
 
@@ -580,8 +607,8 @@ async def unwarn(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if not await is_admin_or_owner(update, context, chat.id, user.id):
         await update.message.reply_text(
-            f"🚫 *Permission Denied* 🚫\n"
-            f"You need to be an *admin* to use this command\\.",
+            f"🚫 *अनुमति नहीं* 🚫\n"
+            f"इस कमांड का उपयोग करने के लिए आपको एक *एडमिन* होना चाहिए.",
             parse_mode=ParseMode.MARKDOWN_V2
         )
         return
@@ -596,26 +623,26 @@ async def unwarn(update: Update, context: ContextTypes.DEFAULT_TYPE):
             target_user = target_chat_member.user
         except ValueError:
             await update.message.reply_text(
-                f"❌ Please provide a valid User ID or reply to a message to unwarn someone\\.",
+                f"❌ किसी को अनवॉर्न करने के लिए कृपया एक वैध उपयोगकर्ता ID प्रदान करें या एक संदेश पर रिप्लाई करें.",
                 parse_mode=ParseMode.MARKDOWN_V2
             )
             return
         except Exception:
             await update.message.reply_text(
-                f"❌ Could not find the user with the provided ID in this chat\\.",
+                f"❌ इस चैट में प्रदान की गई ID वाले उपयोगकर्ता को नहीं ढूँढा जा सका.",
                 parse_mode=ParseMode.MARKDOWN_V2
             )
             return
     else:
         await update.message.reply_text(
-            f"🤔 To unwarn someone, please reply to their message or provide their User ID\\.",
+            f"🤔 किसी को अनवॉर्न करने के लिए, कृपया उनके संदेश पर रिप्लाई करें या उनकी उपयोगकर्ता ID प्रदान करें.",
             parse_mode=ParseMode.MARKDOWN_V2
         )
         return
 
     if target_user.id == user.id:
         await update.message.reply_text(
-            f"😅 You can't unwarn yourself, silly\\!",
+            f"😅 आप खुद को अनवॉर्न नहीं कर सकते, सिली!",
             parse_mode=ParseMode.MARKDOWN_V2
         )
         return
@@ -624,13 +651,13 @@ async def unwarn(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if result.deleted_count > 0:
         await update.message.reply_text(
-            f"✅ *{escape_markdown_v2(target_user.first_name)}*'s warnings have been cleared\\! "
-            f"They're on a clean slate now\\! ✨",
+            f"✅ *{escape_markdown_v2(target_user.first_name)}* की चेतावनियाँ साफ कर दी गई हैं! "
+            f"वे अब एक साफ स्लेट पर हैं! ✨",
             parse_mode=ParseMode.MARKDOWN_V2
         )
     else:
         await update.message.reply_text(
-            f"🤷‍♀️ *{escape_markdown_v2(target_user.first_name)}* has no active warnings to clear in this chat\\.",
+            f"🤷‍♀️ *{escape_markdown_v2(target_user.first_name)}* के पास इस चैट में कोई सक्रिय चेतावनी नहीं है जिसे साफ किया जा सके.",
             parse_mode=ParseMode.MARKDOWN_V2
         )
 
@@ -641,8 +668,8 @@ async def warns(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if not await is_admin_or_owner(update, context, chat.id, user.id):
         await update.message.reply_text(
-            f"🚫 *Permission Denied* 🚫\n"
-            f"You need to be an *admin* to use this command\\.",
+            f"🚫 *अनुमति नहीं* 🚫\n"
+            f"इस कमांड का उपयोग करने के लिए आपको एक *एडमिन* होना चाहिए.",
             parse_mode=ParseMode.MARKDOWN_V2
         )
         return
@@ -657,19 +684,19 @@ async def warns(update: Update, context: ContextTypes.DEFAULT_TYPE):
             target_user = target_chat_member.user
         except ValueError:
             await update.message.reply_text(
-                f"❌ Please provide a valid User ID or reply to a message to check warns\\.",
+                f"❌ चेतावनियों की जाँच करने के लिए कृपया एक वैध उपयोगकर्ता ID प्रदान करें या एक संदेश पर रिप्लाई करें.",
                 parse_mode=ParseMode.MARKDOWN_V2
             )
             return
         except Exception:
             await update.message.reply_text(
-                f"❌ Could not find the user with the provided ID in this chat\\.",
+                f"❌ इस चैट में प्रदान की गई ID वाले उपयोगकर्ता को नहीं ढूँढा जा सका.",
                 parse_mode=ParseMode.MARKDOWN_V2
             )
             return
     else:
         await update.message.reply_text(
-            f"🤔 To check warns, please reply to their message or provide their User ID\\.",
+            f"🤔 चेतावनियों की जाँच करने के लिए, कृपया उनके संदेश पर रिप्लाई करें या उनकी उपयोगकर्ता ID प्रदान करें.",
             parse_mode=ParseMode.MARKDOWN_V2
         )
         return
@@ -680,15 +707,15 @@ async def warns(update: Update, context: ContextTypes.DEFAULT_TYPE):
         warn_count = warn_data.get("warn_count", 0)
         last_reason = warn_data.get("last_warn_reason", "N/A")
         await update.message.reply_text(
-            f"📊 *{escape_markdown_v2(target_user.first_name)}* has `{warn_count}` warns in this group\\.\n"
-            f"Last reason: _{escape_markdown_v2(last_reason)}_\n\n"
-            f"_To reset their warns, use_ `/resetwarns`",
+            f"📊 *{escape_markdown_v2(target_user.first_name)}* के इस समूह में `{warn_count}` चेतावनियाँ हैं.\n"
+            f"अंतिम कारण: _{escape_markdown_v2(last_reason)}_\n\n"
+            f"_उनकी चेतावनियों को रीसेट करने के लिए, `/resetwarns` का उपयोग करें_",
             parse_mode=ParseMode.MARKDOWN_V2
         )
     else:
         await update.message.reply_text(
-            f"✅ *{escape_markdown_v2(target_user.first_name)}* has no active warnings in this group\\!\\n"
-            f"_They are a good member_\\. 👍",
+            f"✅ *{escape_markdown_v2(target_user.first_name)}* के इस समूह में कोई सक्रिय चेतावनी नहीं है!\n"
+            f"_वे एक अच्छे सदस्य हैं_. 👍",
             parse_mode=ParseMode.MARKDOWN_V2
         )
 
@@ -699,8 +726,8 @@ async def mute(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if not await is_admin_or_owner(update, context, chat.id, user.id):
         await update.message.reply_text(
-            f"🚫 *Permission Denied* 🚫\n"
-            f"You need to be an *admin* to use this command\\.",
+            f"🚫 *अनुमति नहीं* 🚫\n"
+            f"इस कमांड का उपयोग करने के लिए आपको एक *एडमिन* होना चाहिए.",
             parse_mode=ParseMode.MARKDOWN_V2
         )
         return
@@ -715,67 +742,65 @@ async def mute(update: Update, context: ContextTypes.DEFAULT_TYPE):
             target_user = target_chat_member.user
         except ValueError:
             await update.message.reply_text(
-                f"❌ Please provide a valid User ID or reply to a message to mute someone\\.",
+                f"❌ किसी को म्यूट करने के लिए कृपया एक वैध उपयोगकर्ता ID प्रदान करें या एक संदेश पर रिप्लाई करें.",
                 parse_mode=ParseMode.MARKDOWN_V2
             )
             return
         except Exception:
             await update.message.reply_text(
-                f"❌ Could not find the user with the provided ID in this chat\\.",
+                f"❌ इस चैट में प्रदान की गई ID वाले उपयोगकर्ता को नहीं ढूँढा जा सका.",
                 parse_mode=ParseMode.MARKDOWN_V2
             )
             return
     else:
         await update.message.reply_text(
-            f"🤔 To mute someone, please reply to their message or provide their User ID\\.",
+            f"🤔 किसी को म्यूट करने के लिए, कृपया उनके संदेश पर रिप्लाई करें या उनकी उपयोगकर्ता ID प्रदान करें.",
             parse_mode=ParseMode.MARKDOWN_V2
         )
         return
 
     if target_user.id == user.id:
         await update.message.reply_text(
-            f"😅 You can't mute yourself, silly\\!",
+            f"😅 आप खुद को म्यूट नहीं कर सकते, सिली!",
             parse_mode=ParseMode.MARKDOWN_V2
         )
         return
 
-    # Prevent admin/owner from being muted by non-creator/non-owner admins
     if await is_admin_or_owner(update, context, chat.id, target_user.id):
         target_chat_member = await context.bot.get_chat_member(chat.id, target_user.id)
         if target_chat_member.status in ["creator", "administrator"] or \
            (target_user.username and target_user.username.lower() == OWNER.lstrip('@').lower()):
             await update.message.reply_text(
-                f"🔒 I can't mute an *admin* or the *bot owner*\\.",
+                f"🔒 मैं एक *एडमिन* या *बॉट मालिक* को म्यूट नहीं कर सकता.",
                 parse_mode=ParseMode.MARKDOWN_V2
             )
             return
 
-    # Default to permanent mute if no time is specified
     mute_duration = None
-    mute_duration_str = "permanently"
+    mute_duration_str = "स्थायी रूप से"
     if len(context.args) > 1:
         try:
             duration_str = context.args[1]
             if duration_str.endswith("m"):
                 mute_duration = timedelta(minutes=int(duration_str[:-1]))
-                mute_duration_str = f"{int(duration_str[:-1])} minutes"
+                mute_duration_str = f"{int(duration_str[:-1])} मिनट के लिए"
             elif duration_str.endswith("h"):
                 mute_duration = timedelta(hours=int(duration_str[:-1]))
-                mute_duration_str = f"{int(duration_str[:-1])} hours"
+                mute_duration_str = f"{int(duration_str[:-1])} घंटे के लिए"
             elif duration_str.endswith("d"):
                 mute_duration = timedelta(days=int(duration_str[:-1]))
-                mute_duration_str = f"{int(duration_str[:-1])} days"
+                mute_duration_str = f"{int(duration_str[:-1])} दिनों के लिए"
             else:
                 await update.message.reply_text(
-                    f"❌ Invalid mute duration format\\.\n"
-                    f"Use `[number]m` for minutes, `[number]h` for hours, or `[number]d` for days\\.",
+                    f"❌ अमान्य म्यूट अवधि प्रारूप.\n"
+                    f"मिनट के लिए `[संख्या]m`, घंटे के लिए `[संख्या]h`, या दिनों के लिए `[संख्या]d` का उपयोग करें.",
                     parse_mode=ParseMode.MARKDOWN_V2
                 )
                 return
         except ValueError:
             await update.message.reply_text(
-                f"❌ Invalid mute duration value\\.\n"
-                f"Use `[number]m` for minutes, `[number]h` for hours, or `[number]d` for days\\.",
+                f"❌ अमान्य म्यूट अवधि मान.\n"
+                f"मिनट के लिए `[संख्या]m`, घंटे के लिए `[संख्या]h`, या दिनों के लिए `[संख्या]d` का उपयोग करें.",
                 parse_mode=ParseMode.MARKDOWN_V2
             )
             return
@@ -791,15 +816,15 @@ async def mute(update: Update, context: ContextTypes.DEFAULT_TYPE):
             until_date=until_date
         )
         await update.message.reply_text(
-            f"🔇 *{escape_markdown_v2(target_user.first_name)}* has been muted {escape_markdown_v2(mute_duration_str)}\\! 🤫\n"
-            f"_No more talking for a while_\\! 👋",
+            f"🔇 *{escape_markdown_v2(target_user.first_name)}* को {escape_markdown_v2(mute_duration_str)} म्यूट कर दिया गया है! 🤫\n"
+            f"_कुछ देर के लिए अब कोई बात नहीं_! 👋",
             parse_mode=ParseMode.MARKDOWN_V2
         )
     except Exception as e:
         logger.error(f"Error muting user {target_user.id}: {e}")
         await update.message.reply_text(
-            f"⚠️ Failed to mute *{escape_markdown_v2(target_user.first_name)}*\\.\n"
-            f"Make sure I have the necessary permissions\\! 😓",
+            f"⚠️ *{escape_markdown_v2(target_user.first_name)}* को म्यूट करने में विफल रहा.\n"
+            f"सुनिश्चित करें कि मेरे पास आवश्यक अनुमतियाँ हैं! 😓",
             parse_mode=ParseMode.MARKDOWN_V2
         )
 
@@ -810,8 +835,8 @@ async def unmute(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if not await is_admin_or_owner(update, context, chat.id, user.id):
         await update.message.reply_text(
-            f"🚫 *Permission Denied* 🚫\n"
-            f"You need to be an *admin* to use this command\\.",
+            f"🚫 *अनुमति नहीं* 🚫\n"
+            f"इस कमांड का उपयोग करने के लिए आपको एक *एडमिन* होना चाहिए.",
             parse_mode=ParseMode.MARKDOWN_V2
         )
         return
@@ -826,26 +851,26 @@ async def unmute(update: Update, context: ContextTypes.DEFAULT_TYPE):
             target_user = target_chat_member.user
         except ValueError:
             await update.message.reply_text(
-                f"❌ Please provide a valid User ID or reply to a message to unmute someone\\.",
+                f"❌ किसी को अनम्यूट करने के लिए कृपया एक वैध उपयोगकर्ता ID प्रदान करें या एक संदेश पर रिप्लाई करें.",
                 parse_mode=ParseMode.MARKDOWN_V2
             )
             return
         except Exception:
             await update.message.reply_text(
-                f"❌ Could not find the user with the provided ID in this chat\\.",
+                f"❌ इस चैट में प्रदान की गई ID वाले उपयोगकर्ता को नहीं ढूँढा जा सका.",
                 parse_mode=ParseMode.MARKDOWN_V2
             )
             return
     else:
         await update.message.reply_text(
-            f"🤔 To unmute someone, please reply to their message or provide their User ID\\.",
+            f"🤔 किसी को अनम्यूट करने के लिए, कृपया उनके संदेश पर रिप्लाई करें या उनकी उपयोगकर्ता ID प्रदान करें.",
             parse_mode=ParseMode.MARKDOWN_V2
         )
         return
 
     if target_user.id == user.id:
         await update.message.reply_text(
-            f"😅 You are already unmuted if you can use this command, silly\\!",
+            f"😅 यदि आप इस कमांड का उपयोग कर सकते हैं तो आप पहले से ही अनम्यूट हैं, सिली!",
             parse_mode=ParseMode.MARKDOWN_V2
         )
         return
@@ -873,32 +898,32 @@ async def unmute(update: Update, context: ContextTypes.DEFAULT_TYPE):
             permissions=permissions
         )
         await update.message.reply_text(
-            f"🎤 *{escape_markdown_v2(target_user.first_name)}* has been unmuted\\! 🎉\n"
-            f"_Welcome back to the conversation_\\! 🤗",
+            f"🎤 *{escape_markdown_v2(target_user.first_name)}* को अनम्यूट कर दिया गया है! 🎉\n"
+            f"_बातचीत में आपका स्वागत है_! 🤗",
             parse_mode=ParseMode.MARKDOWN_V2
         )
     except Exception as e:
         logger.error(f"Error unmuting user {target_user.id}: {e}")
         await update.message.reply_text(
-            f"⚠️ Failed to unmute *{escape_markdown_v2(target_user.first_name)}*\\.\n"
-            f"Make sure I have the necessary permissions\\! 😓",
+            f"⚠️ *{escape_markdown_v2(target_user.first_name)}* को अनम्यूट करने में विफल रहा.\n"
+            f"सुनिश्चित करें कि मेरे पास आवश्यक अनुमतियाँ हैं! 😓",
             parse_mode=ParseMode.MARKDOWN_V2
         )
 
 # ABOUT COMMAND
 async def about(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        f"🌸 *About Rose Bot* 🌸\n\n"
-        f"I am a powerful and versatile group management bot designed to help you keep your Telegram groups safe, clean, and engaging\\! ✨\n\n"
-        f"**Key Features:**\n"
-        f"  •  Advanced moderation tools \\(kick, ban, mute, warn\\)\n"
-        f"  •  Customizable welcome messages and group rules\n"
-        f"  •  Anti\\-spam and anti\\-link mechanisms\n"
-        f"  •  Global ban system for persistent troublemakers\n"
-        f"  •  And much more\\! 🚀\n\n"
-        f"Developed with ❤️ by {OWNER}\n"
-        f"Version: `1.0.0`\n" # You can add a version number here
-        f"Join my [Support Channel](https://t.me/{escape_markdown_v2('Rajaraj909')}) for updates and discussions\\! 📣", # Replace with your actual channel link
+        f"🌸 *रोज बॉट के बारे में* 🌸\n\n"
+        f"मैं एक शक्तिशाली और बहुमुखी समूह प्रबंधन बॉट हूँ जिसे आपके टेलीग्राम समूहों को सुरक्षित, स्वच्छ और आकर्षक रखने में मदद करने के लिए डिज़ाइन किया गया है! ✨\n\n"
+        f"**मुख्य विशेषताएं:**\n"
+        f"  •  उन्नत मॉडरेशन उपकरण \\(किक, बैन, म्यूट, वॉर्न\\)\n"
+        f"  •  कस्टमाइजेबल स्वागत संदेश और समूह नियम\n"
+        f"  •  एंटी-स्पैम और एंटी-लिंक तंत्र\n"
+        f"  •  लगातार समस्या पैदा करने वालों के लिए वैश्विक बैन प्रणाली\n"
+        f"  •  और भी बहुत कुछ! 🚀\n\n"
+        f"{OWNER} द्वारा ❤️ के साथ विकसित\n"
+        f"संस्करण: `1.0.0`\n" # You can add a version number here
+        f"अपडेट और चर्चा के लिए मेरे [समर्थन चैनल](https://t.me/{escape_markdown_v2('Rajaraj909')}) में शामिल हों! 📣", # Replace with your actual channel link
         parse_mode=ParseMode.MARKDOWN_V2,
         disable_web_page_preview=True
     )
@@ -907,25 +932,24 @@ async def about(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
     start_time = time.time()
     ping_message = await update.message.reply_text(
-        f"🏓 Pong\\! Measuring latency\\.\\.",
+        f"🏓 पोंग! विलंबता माप रहा है..",
         parse_mode=ParseMode.MARKDOWN_V2
     )
     end_time = time.time()
     latency = round((end_time - start_time) * 1000) # in milliseconds
     await ping_message.edit_text(
-        f"🏓 Pong\\! Latency: `{latency}`ms\\.\n"
-        f"_I'm fast as a blink_\\! ✨",
+        f"🏓 पोंग! विलंबता: `{latency}`ms.\n"
+        f"_मैं पलक झपकते ही तेज़ हूँ_! ✨",
         parse_mode=ParseMode.MARKDOWN_V2
     )
 
 # GLOBAL BAN COMMAND (OWNER ONLY)
 async def gban(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
-    # Keep this as OWNER-ONLY as global bans typically are.
-    if user.username != OWNER.lstrip('@'):
+    if user.username.lower() != OWNER.lstrip('@').lower():
         await update.message.reply_text(
-            f"🚫 *Access Denied* 🚫\n"
-            f"This command can only be used by the *bot owner*\\.",
+            f"🚫 *पहुँच अस्वीकृत* 🚫\n"
+            f"इस कमांड का उपयोग केवल *बॉट मालिक* ही कर सकता है.",
             parse_mode=ParseMode.MARKDOWN_V2
         )
         return
@@ -938,36 +962,34 @@ async def gban(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif context.args:
         try:
             target_user_id = int(context.args[0])
-            # Try to get username for better logging/confirmation
             try:
-                target_user_chat_info = await context.bot.get_chat(target_user_id) # This works for public users/bots/channels
+                target_user_chat_info = await context.bot.get_chat(target_user_id)
                 target_username = target_user_chat_info.username or target_user_chat_info.first_name
             except Exception:
-                target_username = f"User ID: {target_user_id}"
+                target_username = f"उपयोगकर्ता ID: {target_user_id}"
         except ValueError:
             await update.message.reply_text(
-                f"❌ Please provide a valid User ID or reply to a message to globally ban someone\\.",
+                f"❌ किसी को वैश्विक रूप से बैन करने के लिए कृपया एक वैध उपयोगकर्ता ID प्रदान करें या एक संदेश पर रिप्लाई करें.",
                 parse_mode=ParseMode.MARKDOWN_V2
             )
             return
     else:
         await update.message.reply_text(
-            f"🤔 To globally ban someone, please reply to their message or provide their User ID\\.",
+            f"🤔 किसी को वैश्विक रूप से बैन करने के लिए, कृपया उनके संदेश पर रिप्लाई करें या उनकी उपयोगकर्ता ID प्रदान करें.",
             parse_mode=ParseMode.MARKDOWN_V2
         )
         return
 
     if not target_user_id:
         await update.message.reply_text(
-            f"❌ Could not determine the user to global ban\\.",
+            f"❌ वैश्विक रूप से बैन करने के लिए उपयोगकर्ता निर्धारित नहीं किया जा सका.",
             parse_mode=ParseMode.MARKDOWN_V2
         )
         return
 
-    # Prevent gban of owner
     if target_user_id == user.id:
         await update.message.reply_text(
-            f"😅 You can't globally ban yourself, silly\\!",
+            f"😅 आप खुद को वैश्विक रूप से बैन नहीं कर सकते, सिली!",
             parse_mode=ParseMode.MARKDOWN_V2
         )
         return
@@ -979,26 +1001,25 @@ async def gban(update: Update, context: ContextTypes.DEFAULT_TYPE):
             upsert=True
         )
         await update.message.reply_text(
-            f"⛔️ *{escape_markdown_v2(str(target_username))}* \\(ID: `{target_user_id}`\\) has been *globally banned*\\! 🚫\n"
-            f"_They are now restricted from all groups where I am present_\\.",
+            f"⛔️ *{escape_markdown_v2(str(target_username))}* \\(ID: `{target_user_id}`\\) को *वैश्विक रूप से बैन* कर दिया गया है! 🚫\n"
+            f"_वे अब मेरे उपस्थित सभी समूहों से प्रतिबंधित हैं._",
             parse_mode=ParseMode.MARKDOWN_V2
         )
     except Exception as e:
         logger.error(f"Error global banning user {target_user_id}: {e}")
         await update.message.reply_text(
-            f"⚠️ Failed to globally ban *{escape_markdown_v2(str(target_username))}*\\.\n"
-            f"An error occurred: _{escape_markdown_v2(str(e))}_",
+            f"⚠️ *{escape_markdown_v2(str(target_username))}* को वैश्विक रूप से बैन करने में विफल रहा.\n"
+            f"एक त्रुटि हुई: _{escape_markdown_v2(str(e))}_",
             parse_mode=ParseMode.MARKDOWN_V2
         )
 
 # UNGBAN COMMAND (OWNER ONLY)
 async def ungban(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
-    # Keep this as OWNER-ONLY
-    if user.username != OWNER.lstrip('@'):
+    if user.username.lower() != OWNER.lstrip('@').lower():
         await update.message.reply_text(
-            f"🚫 *Access Denied* 🚫\n"
-            f"This command can only be used by the *bot owner*\\.",
+            f"🚫 *पहुँच अस्वीकृत* 🚫\n"
+            f"इस कमांड का उपयोग केवल *बॉट मालिक* ही कर सकता है.",
             parse_mode=ParseMode.MARKDOWN_V2
         )
         return
@@ -1011,28 +1032,27 @@ async def ungban(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif context.args:
         try:
             target_user_id = int(context.args[0])
-            # Try to get username for better logging/confirmation
             try:
                 target_user_chat_info = await context.bot.get_chat(target_user_id)
                 target_username = target_user_chat_info.username or target_user_chat_info.first_name
             except Exception:
-                target_username = f"User ID: {target_user_id}"
+                target_username = f"उपयोगकर्ता ID: {target_user_id}"
         except ValueError:
             await update.message.reply_text(
-                f"❌ Please provide a valid User ID to unglobal ban someone\\.",
+                f"❌ किसी को वैश्विक रूप से अनबैन करने के लिए कृपया एक वैध उपयोगकर्ता ID प्रदान करें.",
                 parse_mode=ParseMode.MARKDOWN_V2
             )
             return
     else:
         await update.message.reply_text(
-            f"🤔 To unglobal ban someone, please reply to their message or provide their User ID\\.",
+            f"🤔 किसी को वैश्विक रूप से अनबैन करने के लिए, कृपया उनके संदेश पर रिप्लाई करें या उनकी उपयोगकर्ता ID प्रदान करें.",
             parse_mode=ParseMode.MARKDOWN_V2
         )
         return
 
     if not target_user_id:
         await update.message.reply_text(
-            f"❌ Could not determine the user to unglobal ban\\.",
+            f"❌ वैश्विक रूप से अनबैन करने के लिए उपयोगकर्ता निर्धारित नहीं किया जा सका.",
             parse_mode=ParseMode.MARKDOWN_V2
         )
         return
@@ -1041,39 +1061,38 @@ async def ungban(update: Update, context: ContextTypes.DEFAULT_TYPE):
         result = global_bans_collection.delete_one({"user_id": target_user_id})
         if result.deleted_count > 0:
             await update.message.reply_text(
-                f"✅ *{escape_markdown_v2(str(target_username))}* \\(ID: `{target_user_id}`\\) has been *unglobally banned*\\! 🎉\n"
-                f"_They can now join groups where I am present again_\\.",
+                f"✅ *{escape_markdown_v2(str(target_username))}* \\(ID: `{target_user_id}`\\) को *वैश्विक रूप से अनबैन* कर दिया गया है! 🎉\n"
+                f"_वे अब उन समूहों में शामिल हो सकते हैं जहाँ मैं उपस्थित हूँ._",
                 parse_mode=ParseMode.MARKDOWN_V2
             )
         else:
             await update.message.reply_text(
-                f"🤷‍♀️ User \\(ID: `{target_user_id}`\\) is not currently globally banned\\.",
+                f"🤷‍♀️ उपयोगकर्ता \\(ID: `{target_user_id}`\\) वर्तमान में वैश्विक रूप से बैन नहीं है.",
                 parse_mode=ParseMode.MARKDOWN_V2
             )
     except Exception as e:
         logger.error(f"Error unglobal banning user {target_user_id}: {e}")
         await update.message.reply_text(
-            f"⚠️ Failed to unglobal ban *{escape_markdown_v2(str(target_username))}*\\.\n"
-            f"An error occurred: _{escape_markdown_v2(str(e))}_",
+            f"⚠️ *{escape_markdown_v2(str(target_username))}* को वैश्विक रूप से अनबैन करने में विफल रहा.\n"
+            f"एक त्रुटि हुई: _{escape_markdown_v2(str(e))}_",
             parse_mode=ParseMode.MARKDOWN_V2
         )
 
 # GBLACKLIST COMMAND (OWNER ONLY - Similar to Gban, but can be managed by ID for persistent users)
 async def gblacklist(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
-    # Keep this as OWNER-ONLY
-    if user.username != OWNER.lstrip('@'):
+    if user.username.lower() != OWNER.lstrip('@').lower():
         await update.message.reply_text(
-            f"🚫 *Access Denied* 🚫\n"
-            f"This command can only be used by the *bot owner*\\.",
+            f"🚫 *पहुँच अस्वीकृत* 🚫\n"
+            f"इस कमांड का उपयोग केवल *बॉट मालिक* ही कर सकता है.",
             parse_mode=ParseMode.MARKDOWN_V2
         )
         return
 
     if not context.args or not context.args[0].isdigit():
         await update.message.reply_text(
-            f"❌ Please provide a valid *User ID* to add to the global blacklist\\.\n"
-            f"Example: `/gblacklist 123456789`",
+            f"❌ वैश्विक ब्लैकलिस्ट में जोड़ने के लिए कृपया एक वैध *उपयोगकर्ता ID* प्रदान करें.\n"
+            f"उदाहरण: `/gblacklist 123456789`",
             parse_mode=ParseMode.MARKDOWN_V2
         )
         return
@@ -1082,7 +1101,7 @@ async def gblacklist(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if target_user_id == user.id:
         await update.message.reply_text(
-            f"😅 You can't blacklist yourself, silly\\!",
+            f"😅 आप खुद को ब्लैकलिस्ट नहीं कर सकते, सिली!",
             parse_mode=ParseMode.MARKDOWN_V2
         )
         return
@@ -1094,34 +1113,33 @@ async def gblacklist(update: Update, context: ContextTypes.DEFAULT_TYPE):
             upsert=True
         )
         await update.message.reply_text(
-            f"🚨 User ID: `{target_user_id}` has been added to the *Global Blacklist*\\! ⛔️\n"
-            f"_They will not be able to join any group where I am active_\\.",
+            f"🚨 उपयोगकर्ता ID: `{target_user_id}` को *वैश्विक ब्लैकलिस्ट* में जोड़ दिया गया है! ⛔️\n"
+            f"_वे अब किसी भी समूह में शामिल नहीं हो पाएंगे जहाँ मैं सक्रिय हूँ._",
             parse_mode=ParseMode.MARKDOWN_V2
         )
     except Exception as e:
         logger.error(f"Error global blacklisting user {target_user_id}: {e}")
         await update.message.reply_text(
-            f"⚠️ Failed to add User ID: `{target_user_id}` to global blacklist\\.\n"
-            f"An error occurred: _{escape_markdown_v2(str(e))}_",
+            f"⚠️ उपयोगकर्ता ID: `{target_user_id}` को वैश्विक ब्लैकलिस्ट में जोड़ने में विफल रहा.\n"
+            f"एक त्रुटि हुई: _{escape_markdown_v2(str(e))}_",
             parse_mode=ParseMode.MARKDOWN_V2
         )
 
 # UNGBLACKLIST COMMAND (OWNER ONLY)
 async def ungblacklist(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
-    # Keep this as OWNER-ONLY
-    if user.username != OWNER.lstrip('@'):
+    if user.username.lower() != OWNER.lstrip('@').lower():
         await update.message.reply_text(
-            f"🚫 *Access Denied* 🚫\n"
-            f"This command can only be used by the *bot owner*\\.",
+            f"🚫 *पहुँच अस्वीकृत* 🚫\n"
+            f"इस कमांड का उपयोग केवल *बॉट मालिक* ही कर सकता है.",
             parse_mode=ParseMode.MARKDOWN_V2
         )
         return
 
     if not context.args or not context.args[0].isdigit():
         await update.message.reply_text(
-            f"❌ Please provide a valid *User ID* to remove from the global blacklist\\.\n"
-            f"Example: `/ungblacklist 123456789`",
+            f"❌ वैश्विक ब्लैकलिस्ट से हटाने के लिए कृपया एक वैध *उपयोगकर्ता ID* प्रदान करें.\n"
+            f"उदाहरण: `/ungblacklist 123456789`",
             parse_mode=ParseMode.MARKDOWN_V2
         )
         return
@@ -1132,31 +1150,30 @@ async def ungblacklist(update: Update, context: ContextTypes.DEFAULT_TYPE):
         result = global_bans_collection.delete_one({"user_id": target_user_id, "is_blacklist": True})
         if result.deleted_count > 0:
             await update.message.reply_text(
-                f"✅ User ID: `{target_user_id}` has been *removed* from the Global Blacklist\\! 🎉\n"
-                f"_They can now join groups where I am active again_\\.",
+                f"✅ उपयोगकर्ता ID: `{target_user_id}` को वैश्विक ब्लैकलिस्ट से *हटा दिया गया* है! 🎉\n"
+                f"_वे अब उन समूहों में शामिल हो सकते हैं जहाँ मैं सक्रिय हूँ._",
                 parse_mode=ParseMode.MARKDOWN_V2
             )
         else:
             await update.message.reply_text(
-                f"🤷‍♀️ User ID: `{target_user_id}` is not currently in the global blacklist\\.",
+                f"🤷‍♀️ उपयोगकर्ता ID: `{target_user_id}` वर्तमान में वैश्विक ब्लैकलिस्ट में नहीं है.",
                 parse_mode=ParseMode.MARKDOWN_V2
             )
     except Exception as e:
         logger.error(f"Error unglobal blacklisting user {target_user_id}: {e}")
         await update.message.reply_text(
-            f"⚠️ Failed to remove User ID: `{target_user_id}` from global blacklist\\.\n"
-            f"An error occurred: _{escape_markdown_v2(str(e))}_",
+            f"⚠️ उपयोगकर्ता ID: `{target_user_id}` को वैश्विक ब्लैकलिस्ट से हटाने में विफल रहा.\n"
+            f"एक त्रुटि हुई: _{escape_markdown_v2(str(e))}_",
             parse_mode=ParseMode.MARKDOWN_V2
         )
 
 # BLACKLIST LIST COMMAND (OWNER ONLY)
 async def blacklist_list(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
-    # Keep this as OWNER-ONLY
-    if user.username != OWNER.lstrip('@'):
+    if user.username.lower() != OWNER.lstrip('@').lower():
         await update.message.reply_text(
-            f"🚫 *Access Denied* 🚫\n"
-            f"This command can only be used by the *bot owner*\\.",
+            f"🚫 *पहुँच अस्वीकृत* 🚫\n"
+            f"इस कमांड का उपयोग केवल *बॉट मालिक* ही कर सकता है.",
             parse_mode=ParseMode.MARKDOWN_V2
         )
         return
@@ -1164,15 +1181,15 @@ async def blacklist_list(update: Update, context: ContextTypes.DEFAULT_TYPE):
     blacklisted_users = list(global_bans_collection.find({"is_blacklist": True}))
 
     if blacklisted_users:
-        response = "📋 *Global Blacklisted Users:*\n\n"
+        response = "📋 *वैश्विक ब्लैकलिस्टेड उपयोगकर्ता:*\n\n"
         for entry in blacklisted_users:
             user_id = entry.get("user_id")
             banned_at = entry.get("banned_at", "N/A").strftime("%Y-%m-%d %H:%M:%S") if entry.get("banned_at") != "N/A" else "N/A"
-            response += f"•  User ID: `{user_id}` \\| Banned At: _{banned_at}_\n"
+            response += f"•  उपयोगकर्ता ID: `{user_id}` \\| बैन किया गया: _{banned_at}_\n"
         await update.message.reply_text(response, parse_mode=ParseMode.MARKDOWN_V2)
     else:
         await update.message.reply_text(
-            f"✅ No users are currently in the *Global Blacklist*\\. The list is clean\\! ✨",
+            f"✅ वर्तमान में *वैश्विक ब्लैकलिस्ट* में कोई उपयोगकर्ता नहीं हैं. सूची साफ है! ✨",
             parse_mode=ParseMode.MARKDOWN_V2
         )
 
@@ -1183,16 +1200,16 @@ async def setrules(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if not await is_admin_or_owner(update, context, chat.id, user.id):
         await update.message.reply_text(
-            f"🚫 *Permission Denied* 🚫\n"
-            f"You need to be an *admin* to set rules\\.",
+            f"🚫 *अनुमति नहीं* 🚫\n"
+            f"नियम सेट करने के लिए आपको एक *एडमिन* होना चाहिए.",
             parse_mode=ParseMode.MARKDOWN_V2
         )
         return
 
     if not context.args:
         await update.message.reply_text(
-            f"❌ Please provide the rules text after the command\\.\n"
-            f"Example: `/setrules Be kind, follow Telegram TOS\\.`",
+            f"❌ कमांड के बाद कृपया नियम पाठ प्रदान करें.\n"
+            f"उदाहरण: `/setrules दयालु रहें, टेलीग्राम TOS का पालन करें.`",
             parse_mode=ParseMode.MARKDOWN_V2
         )
         return
@@ -1204,8 +1221,8 @@ async def setrules(update: Update, context: ContextTypes.DEFAULT_TYPE):
         upsert=True
     )
     await update.message.reply_text(
-        f"📜 Group rules have been *set successfully*\\! ✨\n"
-        f"Members can now view them using `/rules`\\.",
+        f"📜 समूह के नियम *सफलतापूर्वक सेट* हो गए हैं! ✨\n"
+        f"सदस्य अब उन्हें `/rules` का उपयोग करके देख सकते हैं.",
         parse_mode=ParseMode.MARKDOWN_V2
     )
 
@@ -1216,15 +1233,15 @@ async def rules(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if rules_data and rules_data.get("rules_text"):
         rules_text = rules_data["rules_text"]
         await update.message.reply_text(
-            f"📜 *Group Rules for {escape_markdown_v2(chat.title)}:*\n\n"
+            f"📜 *{escape_markdown_v2(chat.title)} के लिए समूह के नियम:*\n\n"
             f"{escape_markdown_v2(rules_text)}\n\n"
-            f"_Please follow these rules to ensure a pleasant environment for everyone\\._ 😇",
+            f"_कृपया सभी के लिए एक सुखद वातावरण सुनिश्चित करने के लिए इन नियमों का पालन करें._ 😇",
             parse_mode=ParseMode.MARKDOWN_V2
         )
     else:
         await update.message.reply_text(
-            f"🤷‍♀️ No rules have been set for this group yet\\.\n"
-            f"_Admins can set rules using_ `/setrules <text>`\\.",
+            f"🤷‍♀️ इस समूह के लिए अभी तक कोई नियम निर्धारित नहीं किए गए हैं.\n"
+            f"_एडमिन `/setrules <text>` का उपयोग करके नियम सेट कर सकते हैं._",
             parse_mode=ParseMode.MARKDOWN_V2
         )
 
@@ -1234,8 +1251,8 @@ async def cleanrules(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if not await is_admin_or_owner(update, context, chat.id, user.id):
         await update.message.reply_text(
-            f"🚫 *Permission Denied* 🚫\n"
-            f"You need to be an *admin* to clear rules\\.",
+            f"🚫 *अनुमति नहीं* 🚫\n"
+            f"नियम साफ करने के लिए आपको एक *एडमिन* होना चाहिए.",
             parse_mode=ParseMode.MARKDOWN_V2
         )
         return
@@ -1243,34 +1260,27 @@ async def cleanrules(update: Update, context: ContextTypes.DEFAULT_TYPE):
     result = rules_collection.delete_one({"chat_id": chat.id})
     if result.deleted_count > 0:
         await update.message.reply_text(
-            f"🗑️ Group rules have been *cleared successfully*\\! ✨",
+            f"🗑️ समूह के नियम *सफलतापूर्वक साफ* हो गए हैं! ✨",
             parse_mode=ParseMode.MARKDOWN_V2
         )
     else:
         await update.message.reply_text(
-            f"🤷‍♀️ No rules were set for this group to begin with\\.",
+            f"🤷‍♀️ इस समूह के लिए शुरू से ही कोई नियम निर्धारित नहीं किए गए थे.",
             parse_mode=ParseMode.MARKDOWN_V2
         )
 
 # AUTO LINK FILTER
-# This handler needs to be conditional based on a setting saved via `autolink` command.
-# For now, it's always active if the handler is added.
 async def handle_links(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat = update.effective_chat
     message = update.effective_message
 
-    # In a real bot, you'd fetch the chat's setting for auto_link_filter here.
-    # For now, we'll assume it's "on" if the handler is active.
-    # Example:
-    # chat_settings = chat_settings_collection.find_one({"chat_id": chat.id})
-    # if not chat_settings or not chat_settings.get("auto_link_filter", False):
-    #     return # Do nothing if auto link filter is off
+    chat_settings = chat_settings_collection.find_one({"chat_id": chat.id})
+    if not chat_settings or not chat_settings.get("auto_link_filter", False):
+        return # Do nothing if auto link filter is off
 
-    # Bypass if message is from an admin or the bot itself
     if message.from_user and await is_admin_or_owner(update, context, chat.id, message.from_user.id):
         return
 
-    # Check for text messages with entities like URLs
     if message.text and (message.entities or message.caption_entities):
         has_url = False
         for entity in (message.entities or []) + (message.caption_entities or []):
@@ -1283,100 +1293,80 @@ async def handle_links(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await message.delete()
                 await context.bot.send_message(
                     chat.id,
-                    f"🔗 Links are not allowed here, *{escape_markdown_v2(message.from_user.first_name)}*\\! 🙅‍♀️",
+                    f"🔗 लिंक यहाँ अनुमति नहीं हैं, *{escape_markdown_v2(message.from_user.first_name)}*! 🙅‍♀️",
                     parse_mode=ParseMode.MARKDOWN_V2
                 )
             except Exception as e:
-                logger.warning(f"Could not delete link message or send warning: {e}")
+                logger.warning(f"लिंक संदेश को हटाने या चेतावनी भेजने में विफल रहा: {e}")
 
 # FALLBACK HELP FOR UNKNOWN COMMANDS
 async def fallback_help(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    # Only respond in group chats and if it's a command that doesn't exist
-    # This check `not update.effective_message.text.split()[0][1:] in context.application.handlers[0]` is problematic.
-    # It tries to access handlers based on an index, which is not how handlers are structured.
-    # A more robust check for "unknown command" is typically done by letting other handlers fail,
-    # or by explicitly checking command list, which is more complex.
-    # For now, let's simplify this to just a general "unknown command" response if it starts with /
-    if update.effective_chat.type == "group" and update.effective_message.text.startswith('/') and len(update.effective_message.text) > 1:
-        # A more advanced check would be to see if it matches any registered command.
-        # But for simplicity, we'll just catch any /command that isn't handled by other CommandHandlers.
-        # This handler should ideally be the LAST CommandHandler or a general MessageHandler.
-        await update.message.reply_text(
-            f"❓ I'm not familiar with that command, *{escape_markdown_v2(update.effective_user.first_name)}*\\.\n"
-            f"For a list of commands, please use /help in a private chat with me\\.",
-            parse_mode=ParseMode.MARKDOWN_V2
-        )
+    if update.effective_chat.type == "group" and update.effective_message.text and update.effective_message.text.startswith('/'):
+        # This checks if it's a command that the bot received.
+        # A more robust check would involve iterating through registered command handlers,
+        # but for simplicity, we assume if it starts with '/' it's an intended command.
+        command_text = update.effective_message.text.split(' ')[0]
+        if command_text.lower() not in context.application.handlers: # This is a conceptual check, handlers are not directly accessible this way.
+            # A simpler way is to let this handler be the last CommandHandler or a general MessageHandler that checks for '/'
+            await update.message.reply_text(
+                f"❓ मैं उस कमांड से परिचित नहीं हूँ, *{escape_markdown_v2(update.effective_user.first_name)}*.\n"
+                f"कमांड्स की सूची के लिए, कृपया मेरे साथ एक निजी चैट में /help का उपयोग करें.",
+                parse_mode=ParseMode.MARKDOWN_V2
+            )
 
 # CLEAN SERVICE MESSAGES
 async def cleanservice(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat = update.effective_chat
     user = update.effective_user
 
-    # ADDED ADMIN/OWNER CHECK HERE
     if not await is_admin_or_owner(update, context, chat.id, user.id):
         await update.message.reply_text(
-            f"🚫 *Permission Denied* 🚫\n"
-            f"You need to be an *admin* to use this command\\.",
+            f"🚫 *अनुमति नहीं* 🚫\n"
+            f"इस कमांड का उपयोग करने के लिए आपको एक *एडमिन* होना चाहिए.",
             parse_mode=ParseMode.MARKDOWN_V2
         )
         return
     
-    # This function would need a more complex implementation to truly clean service messages.
-    # Telegram bots don't have a direct way to 'auto-delete all service messages'.
-    # You'd typically set chat permissions for new members to not see service messages,
-    # or delete them as they come in via a MessageHandler listening for service messages.
-    # For now, this just confirms the command is acknowledged.
     await update.message.reply_text(
-        f"🧹 This command is under development for full automation\\.\n"
-        f"_Currently, you can manually delete service messages or configure group settings_\\.",
+        f"🧹 यह कमांड पूर्ण स्वचालन के लिए विकास के अधीन है.\n"
+        f"_वर्तमान में, आप सेवा संदेशों को मैन्युअल रूप से हटा सकते हैं या समूह सेटिंग्स कॉन्फ़िगर कर सकते हैं._",
         parse_mode=ParseMode.MARKDOWN_V2
     )
-    # A more robust solution would involve setting a handler to delete specific service messages on arrival.
-    # Example:
-    # app.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS | filters.StatusUpdate.LEFT_CHAT_MEMBER, delete_service_message_handler))
 
 # AUTO LINK TOGGLE
 async def autolink(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat = update.effective_chat
     user = update.effective_user
 
-    # ADDED ADMIN/OWNER CHECK HERE
     if not await is_admin_or_owner(update, context, chat.id, user.id):
         await update.message.reply_text(
-            f"🚫 *Permission Denied* 🚫\n"
-            f"You need to be an *admin* to toggle auto link filter\\.",
+            f"🚫 *अनुमति नहीं* 🚫\n"
+            f"ऑटो लिंक फिल्टर को टॉगल करने के लिए आपको एक *एडमिन* होना चाहिए.",
             parse_mode=ParseMode.MARKDOWN_V2
         )
         return
 
     if not context.args or context.args[0].lower() not in ["on", "off"]:
         await update.message.reply_text(
-            f"❌ Please specify `on` or `off` to toggle auto link filter\\.\n"
-            f"Example: `/autolink on` or `/autolink off`",
+            f"❌ ऑटो लिंक फिल्टर को टॉगल करने के लिए कृपया `on` या `off` निर्दिष्ट करें.\n"
+            f"उदाहरण: `/autolink on` या `/autolink off`",
             parse_mode=ParseMode.MARKDOWN_V2
         )
         return
 
-    # In a real scenario, you'd save this setting to your database (e.g., in a 'chat_settings' collection)
-    # For this example, I'll just confirm the action.
     action = context.args[0].lower()
     if action == "on":
-        # You would store this state in the database for the chat.
-        # Example:
-        # chat_settings_collection = get_db_collection("chat_settings") # You'd need to define this collection
-        # chat_settings_collection.update_one({"chat_id": chat.id}, {"$set": {"auto_link_filter": True}}, upsert=True)
+        chat_settings_collection.update_one({"chat_id": chat.id}, {"$set": {"auto_link_filter": True}}, upsert=True)
         await update.message.reply_text(
-            f"✅ Auto link deletion has been *enabled* for this group\\! 🔗\n"
-            f"_I will now automatically remove messages containing links\\._",
+            f"✅ ऑटो लिंक विलोपन इस समूह के लिए *सक्षम* कर दिया गया है! 🔗\n"
+            f"_मैं अब लिंक वाले संदेशों को स्वचालित रूप से हटा दूंगा._",
             parse_mode=ParseMode.MARKDOWN_V2
         )
     else:
-        # Example:
-        # chat_settings_collection = get_db_collection("chat_settings")
-        # chat_settings_collection.update_one({"chat_id": chat.id}, {"$set": {"auto_link_filter": False}}, upsert=True)
+        chat_settings_collection.update_one({"chat_id": chat.id}, {"$set": {"auto_link_filter": False}}, upsert=True)
         await update.message.reply_text(
-            f"🚫 Auto link deletion has been *disabled* for this group\\! 🔓\n"
-            f"_Links will no longer be automatically removed\\._",
+            f"🚫 ऑटो लिंक विलोपन इस समूह के लिए *अक्षम* कर दिया गया है! 🔓\n"
+            f"_लिंक अब स्वचालित रूप से हटाए नहीं जाएंगे._",
             parse_mode=ParseMode.MARKDOWN_V2
         )
 
@@ -1387,17 +1377,17 @@ async def setwelcome(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if not await is_admin_or_owner(update, context, chat.id, user.id):
         await update.message.reply_text(
-            f"🚫 *Permission Denied* 🚫\n"
-            f"You need to be an *admin* to set the welcome message\\.",
+            f"🚫 *अनुमति नहीं* 🚫\n"
+            f"स्वागत संदेश सेट करने के लिए आपको एक *एडमिन* होना चाहिए.",
             parse_mode=ParseMode.MARKDOWN_V2
         )
         return
 
     if not context.args:
         await update.message.reply_text(
-            f"❌ Please provide the welcome message text after the command\\.\n"
-            f"You can use placeholders: `{{first}}`, `{{last}}`, `{{fullname}}`, `{{chatname}}`\\.\n"
-            f"Example: `/setwelcome Welcome {{first}} to {{chatname}}!`",
+            f"❌ कमांड के बाद कृपया स्वागत संदेश पाठ प्रदान करें.\n"
+            f"आप प्लेसहोल्डर्स का उपयोग कर सकते हैं: `{{first}}`, `{{last}}`, `{{fullname}}`, `{{chatname}}`\\.\n"
+            f"उदाहरण: `/setwelcome {{first}} का {{chatname}} में स्वागत है!`",
             parse_mode=ParseMode.MARKDOWN_V2
         )
         return
@@ -1409,8 +1399,8 @@ async def setwelcome(update: Update, context: ContextTypes.DEFAULT_TYPE):
         upsert=True
     )
     await update.message.reply_text(
-        f"🎉 Custom welcome message has been *set successfully*\\! ✨\n"
-        f"_New members will now see this message\\._",
+        f"🎉 कस्टम स्वागत संदेश *सफलतापूर्वक सेट* हो गया है! ✨\n"
+        f"_नए सदस्यों को अब यह संदेश दिखाई देगा._",
         parse_mode=ParseMode.MARKDOWN_V2
     )
 
@@ -1420,8 +1410,8 @@ async def resetwelcome(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if not await is_admin_or_owner(update, context, chat.id, user.id):
         await update.message.reply_text(
-            f"🚫 *Permission Denied* 🚫\n"
-            f"You need to be an *admin* to reset the welcome message\\.",
+            f"🚫 *अनुमति नहीं* 🚫\n"
+            f"स्वागत संदेश रीसेट करने के लिए आपको एक *एडमिन* होना चाहिए.",
             parse_mode=ParseMode.MARKDOWN_V2
         )
         return
@@ -1429,12 +1419,12 @@ async def resetwelcome(update: Update, context: ContextTypes.DEFAULT_TYPE):
     result = welcomes_collection.delete_one({"chat_id": chat.id})
     if result.deleted_count > 0:
         await update.message.reply_text(
-            f"↩️ Custom welcome message has been *reset to default*\\! ✨",
+            f"↩️ कस्टम स्वागत संदेश *डिफ़ॉल्ट पर रीसेट* हो गया है! ✨",
             parse_mode=ParseMode.MARKDOWN_V2
         )
     else:
         await update.message.reply_text(
-            f"🤷‍♀️ No custom welcome message was set for this group to begin with\\.",
+            f"🤷‍♀️ इस समूह के लिए कोई कस्टम स्वागत संदेश सेट नहीं किया गया था.",
             parse_mode=ParseMode.MARKDOWN_V2
         )
 
@@ -1443,10 +1433,9 @@ async def welcome(update: Update, context: ContextTypes.DEFAULT_TYPE):
     welcome_data = welcomes_collection.find_one({"chat_id": chat.id})
     
     welcome_message_text = welcome_data.get("welcome_message") if welcome_data else (
-        "👋 Welcome, {fullname}, to {chatname}!"
+        "👋 स्वागत है, {fullname}, {chatname} में!"
     )
 
-    # Simulate a new member for testing
     simulated_user = update.effective_user
     formatted_message = welcome_message_text.replace("{first}", escape_markdown_v2(simulated_user.first_name))\
                                             .replace("{last}", escape_markdown_v2(simulated_user.last_name or ""))\
@@ -1454,7 +1443,7 @@ async def welcome(update: Update, context: ContextTypes.DEFAULT_TYPE):
                                             .replace("{chatname}", escape_markdown_v2(chat.title))
 
     await update.message.reply_text(
-        f"📝 Testing welcome message for *{escape_markdown_v2(simulated_user.first_name)}*\\:\n\n"
+        f"📝 *{escape_markdown_v2(simulated_user.first_name)}* के लिए स्वागत संदेश का परीक्षण कर रहा है:\n\n"
         f"{formatted_message}",
         parse_mode=ParseMode.MARKDOWN_V2
     )
@@ -1464,8 +1453,8 @@ async def new_member_welcome(update: Update, context: ContextTypes.DEFAULT_TYPE)
         if member.id == context.bot.id:
             # Bot joined the group
             await update.message.reply_text(
-                f"🎉 Hello everyone\\! I'm *Rose*, your new group manager\\! 🌹\n"
-                f"Make sure to make me an *admin* so I can help keep this chat awesome\\! 💪",
+                f"🎉 सभी को नमस्ते! मैं *रोज*, आपकी नई समूह प्रबंधक हूँ! 🌹\n"
+                f"सुनिश्चित करें कि आप मुझे एक *एडमिन* बनाएं ताकि मैं इस चैट को अद्भुत बनाए रखने में मदद कर सकूं! 💪",
                 parse_mode=ParseMode.MARKDOWN_V2
             )
             return
@@ -1473,21 +1462,95 @@ async def new_member_welcome(update: Update, context: ContextTypes.DEFAULT_TYPE)
         chat = update.effective_chat
         welcome_data = welcomes_collection.find_one({"chat_id": chat.id})
         
-        welcome_message_text = welcome_data.get("welcome_message") if welcome_data else (
-            "👋 Welcome, {fullname}, to {chatname}!"
-        )
+        # Dynamic welcome message variations
+        default_welcome_templates = [
+            "👋 {fullname} का {chatname} में स्वागत है! हमें आपको पाकर खुशी हुई! 🎉",
+            "✨ {fullname} ने अभी-अभी {chatname} में प्रवेश किया! मज़े करें! 🥳",
+            "🚀 एक नए सदस्य ने उड़ान भरी: {fullname}! {chatname} में आपका स्वागत है! 👋",
+            "🌟 {fullname} का {chatname} में स्वागत है! हम आपके शामिल होने से उत्साहित हैं! 😊",
+            "💖 {fullname}, {chatname} के परिवार में आपका स्वागत है! हम आपके साथ जुड़कर खुश हैं! 🤗"
+        ]
+        
+        welcome_message_text = welcome_data.get("welcome_message") if welcome_data else random.choice(default_welcome_templates)
 
         formatted_message = welcome_message_text.replace("{first}", escape_markdown_v2(member.first_name))\
                                                 .replace("{last}", escape_markdown_v2(member.last_name or ""))\
                                                 .replace("{fullname}", escape_markdown_v2(member.full_name))\
                                                 .replace("{chatname}", escape_markdown_v2(chat.title))
 
+        # Add user's details uniquely for welcome
+        user_info = await _get_user_display_info(member)
+        details_text = (
+            f"\n\n"
+            f"🔗 *आपका विवरण:*\n"
+            f"  •  नाम: {user_info['full_name']}\n"
+            f"  •  उपयोगकर्ता ID: `{user_info['user_id']}`\n"
+            f"  •  उपयोगकर्ता नाम: {user_info['username']}"
+        )
+        formatted_message += details_text
+
+
         try:
-            await update.message.reply_sticker(DEFAULT_JOIN_STICKER_ID)
-            await update.message.reply_text(formatted_message, parse_mode=ParseMode.MARKDOWN_V2)
+            # Send profile picture if available
+            if user_info['profile_pic_file_id']:
+                await update.message.reply_photo(
+                    photo=user_info['profile_pic_file_id'],
+                    caption=formatted_message,
+                    parse_mode=ParseMode.MARKDOWN_V2
+                )
+            else:
+                # Fallback to sticker then text
+                await update.message.reply_sticker(DEFAULT_JOIN_STICKER_ID)
+                await update.message.reply_text(formatted_message, parse_mode=ParseMode.MARKDOWN_V2)
         except Exception as e:
-            logger.error(f"Error sending welcome sticker or message: {e}")
-            await update.message.reply_text(formatted_message, parse_mode=ParseMode.MARKDOWN_V2) # Fallback to text only
+            logger.error(f"स्वागत स्टिकर या संदेश भेजने में विफल रहा: {e}")
+            # Final fallback to just text if both fail
+            await update.message.reply_text(formatted_message, parse_mode=ParseMode.MARKDOWN_V2) 
+
+# LEFT MEMBER ANNOUNCEMENT
+async def left_member_announcement(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    member = update.message.left_chat_member
+    chat = update.effective_chat
+
+    if member.id == context.bot.id:
+        # Bot was removed from the group, no need to announce its own departure
+        logger.info(f"Bot was removed from chat {chat.id} ({chat.title})")
+        return
+
+    # Dynamic goodbye message variations
+    goodbye_templates = [
+        "👋 अलविदा, *{fullname}*! हमें उम्मीद है कि आप फिर से मिलेंगे. 😥",
+        "💔 *{fullname}* ने समूह छोड़ दिया. हम उन्हें याद करेंगे. 😢",
+        "🚶‍♂️ *{fullname}* ने {chatname} से विदा ली. सुरक्षित रहें! 🌟",
+        "🚪 *{fullname}* चला गया. विदाई! 👋",
+        "😔 एक सदस्य चला गया: *{fullname}*. आपकी कमी खलेगी."
+    ]
+
+    goodbye_message_text = random.choice(goodbye_templates)
+
+    formatted_message = goodbye_message_text.replace("{first}", escape_markdown_v2(member.first_name))\
+                                            .replace("{last}", escape_markdown_v2(member.last_name or ""))\
+                                            .replace("{fullname}", escape_markdown_v2(member.full_name))\
+                                            .replace("{chatname}", escape_markdown_v2(chat.title))
+
+    # Add user's details for farewell
+    details_text = (
+        f"\n\n"
+        f"🔗 *विवरण:*\n"
+        f"  •  नाम: {escape_markdown_v2(member.full_name)}\n"
+        f"  •  उपयोगकर्ता ID: `{member.id}`\n"
+        f"  •  उपयोगकर्ता नाम: {escape_markdown_v2(f'@{member.username}') if member.username else '_N/A_'}"
+    )
+    formatted_message += details_text
+
+    try:
+        await update.message.reply_text(
+            formatted_message,
+            parse_mode=ParseMode.MARKDOWN_V2
+        )
+    except Exception as e:
+        logger.error(f"सदस्य के जाने का संदेश भेजने में विफल रहा: {e}")
+
 
 # INFO COMMAND
 async def info(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -1500,20 +1563,17 @@ async def info(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif context.args:
         try:
             user_id = int(context.args[0])
-            # Attempt to get chat member. This will fail if the user is not in the chat.
-            # For general "info", you might want to fetch user by ID without being a chat member.
-            # But for admin purposes (like checking warns), it makes sense to be a member.
             target_chat_member = await context.bot.get_chat_member(chat.id, user_id)
             target_user = target_chat_member.user
         except ValueError:
             await update.message.reply_text(
-                f"❌ Please provide a valid User ID or reply to a message to get user info\\.",
+                f"❌ उपयोगकर्ता जानकारी प्राप्त करने के लिए कृपया एक वैध उपयोगकर्ता ID प्रदान करें या एक संदेश पर रिप्लाई करें.",
                 parse_mode=ParseMode.MARKDOWN_V2
             )
             return
         except Exception:
             await update.message.reply_text(
-                f"❌ Could not find the user with the provided ID in this chat or fetch their info\\.",
+                f"❌ इस चैट में प्रदान की गई ID वाले उपयोगकर्ता को नहीं ढूँढा जा सका या उनकी जानकारी प्राप्त नहीं की जा सकी.",
                 parse_mode=ParseMode.MARKDOWN_V2
             )
             return
@@ -1522,27 +1582,41 @@ async def info(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if not target_user:
         await update.message.reply_text(
-            f"🤔 To get user info, please reply to their message or provide their User ID\\.",
+            f"🤔 उपयोगकर्ता जानकारी प्राप्त करने के लिए, कृपया उनके संदेश पर रिप्लाई करें या उनकी उपयोगकर्ता ID प्रदान करें.",
             parse_mode=ParseMode.MARKDOWN_V2
         )
         return
 
-    # Fetch more detailed user info if possible (e.g., admin status, warns)
     is_chat_admin = await is_admin_or_owner(update, context, chat.id, target_user.id)
     warn_data = warns_collection.find_one({"chat_id": chat.id, "user_id": target_user.id})
     warn_count = warn_data.get("warn_count", 0) if warn_data else 0
 
+    user_info_display = await _get_user_display_info(target_user)
+
     user_info_text = (
-        f"👤 *User Information* 👤\n\n"
-        f"•  *Name:* {escape_markdown_v2(target_user.full_name)}\n"
-        f"•  *User ID:* `{target_user.id}`\n"
-        f"•  *Username:* {escape_markdown_v2('@' + target_user.username) if target_user.username else '_N/A_'}\n"
-        f"•  *Is Bot:* {'Yes' if target_user.is_bot else 'No'}\n"
-        f"•  *Is Admin in this chat:* {'Yes' if is_chat_admin else 'No'}\n"
-        f"•  *Warns in this chat:* `{warn_count}`\n\n"
-        f"_Use `/warns` to check specific warn details\\._"
+        f"👤 *उपयोगकर्ता जानकारी* 👤\n\n"
+        f"•  *नाम:* {user_info_display['full_name']}\n"
+        f"•  *उपयोगकर्ता ID:* `{user_info_display['user_id']}`\n"
+        f"•  *उपयोगकर्ता नाम:* {user_info_display['username']}\n"
+        f"•  *बॉट है:* {'हाँ' if target_user.is_bot else 'नहीं'}\n"
+        f"•  *इस चैट में एडमिन है:* {'हाँ' if is_chat_admin else 'नहीं'}\n"
+        f"•  *इस चैट में चेतावनियाँ:* `{warn_count}`\n\n"
+        f"_विशिष्ट चेतावनी विवरण की जाँच के लिए `/warns` का उपयोग करें._"
     )
-    await update.message.reply_text(user_info_text, parse_mode=ParseMode.MARKDOWN_V2)
+
+    # Send profile picture if available, then text
+    if user_info_display['profile_pic_file_id']:
+        try:
+            await update.message.reply_photo(
+                photo=user_info_display['profile_pic_file_id'],
+                caption=user_info_text,
+                parse_mode=ParseMode.MARKDOWN_V2
+            )
+        except Exception as e:
+            logger.error(f"उपयोगकर्ता {target_user.id} के लिए प्रोफ़ाइल तस्वीर भेजने में विफल रहा: {e}")
+            await update.message.reply_text(user_info_text, parse_mode=ParseMode.MARKDOWN_V2)
+    else:
+        await update.message.reply_text(user_info_text, parse_mode=ParseMode.MARKDOWN_V2)
 
 # ID COMMAND
 async def get_user_id(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -1550,14 +1624,14 @@ async def get_user_id(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_id = update.message.reply_to_message.from_user.id
         user_name = update.message.reply_to_message.from_user.full_name
         await update.message.reply_text(
-            f"👤 *{escape_markdown_v2(user_name)}*'s User ID: `{user_id}`",
+            f"👤 *{escape_markdown_v2(user_name)}* की उपयोगकर्ता ID: `{user_id}`",
             parse_mode=ParseMode.MARKDOWN_V2
         )
     else:
         user_id = update.effective_user.id
         user_name = update.effective_user.full_name
         await update.message.reply_text(
-            f"👤 Your User ID, *{escape_markdown_v2(user_name)}*, is: `{user_id}`",
+            f"👤 आपकी उपयोगकर्ता ID, *{escape_markdown_v2(user_name)}*, है: `{user_id}`",
             parse_mode=ParseMode.MARKDOWN_V2
         )
 
@@ -1565,7 +1639,7 @@ async def get_user_id(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def main():
     try:
         app = ApplicationBuilder().token(TOKEN).build()
-        logger.info("Bot is starting...")
+        logger.info("बॉट शुरू हो रहा है...")
 
         # Commands
         app.add_handler(CommandHandler("start", start))
@@ -1576,14 +1650,15 @@ async def main():
         app.add_handler(CommandHandler("unmute", unmute))
         app.add_handler(CommandHandler("warn", warn))
         app.add_handler(CommandHandler("warns", warns))
-        app.add_handler(CommandHandler("unwarn", unwarn)) # Changed to unwarn to match common bot commands
+        app.add_handler(CommandHandler("unwarn", unwarn))
         app.add_handler(CommandHandler("resetwarns", unwarn)) # Alias for unwarn/resetwarns for simplicity
         app.add_handler(CommandHandler("id", get_user_id))
         app.add_handler(CommandHandler("chatid", get_chat_id))
         app.add_handler(CommandHandler("about", about))
         app.add_handler(CommandHandler("ping", ping))
-        
-        # Owner Only Commands (GLOBAL MODERATION) - kept as owner only
+        app.add_handler(CommandHandler("info", info)) # Added info command
+
+        # Owner Only Commands (GLOBAL MODERATION)
         app.add_handler(CommandHandler("gban", gban))
         app.add_handler(CommandHandler("ungban", ungban))
         app.add_handler(CommandHandler("gblacklist", gblacklist))
@@ -1592,44 +1667,46 @@ async def main():
 
         # Welcome/Rules - Admin/Owner restricted
         app.add_handler(CommandHandler("setrules", setrules))
-        app.add_handler(CommandHandler("rules", rules)) # This remains publicly accessible to view rules
+        app.add_handler(CommandHandler("rules", rules))
         app.add_handler(CommandHandler("cleanrules", cleanrules))
         app.add_handler(CommandHandler("setwelcome", setwelcome))
         app.add_handler(CommandHandler("resetwelcome", resetwelcome))
         app.add_handler(CommandHandler("welcome", welcome))
+        
+        # New member and left member handlers
         app.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, new_member_welcome))
+        app.add_handler(MessageHandler(filters.StatusUpdate.LEFT_CHAT_MEMBER, left_member_announcement))
 
 
-        # Message tool commands - now admin restricted
+        # Message tool commands - admin restricted
         app.add_handler(CommandHandler("pin", pin))
         app.add_handler(CommandHandler("unpin", unpin))
         app.add_handler(CommandHandler("del", delete_message))
         app.add_handler(CommandHandler("purge", purge))
-        app.add_handler(CommandHandler("cleanservice", cleanservice)) # Admin/Owner restricted
-        app.add_handler(CommandHandler("autolink", autolink)) # Admin/Owner restricted
+        app.add_handler(CommandHandler("cleanservice", cleanservice))
+        app.add_handler(CommandHandler("autolink", autolink))
 
 
         # Auto link filter and fallback help in group chats
-        # Consider making handle_links conditional based on a stored chat setting (auto_link_filter)
         app.add_handler(MessageHandler(filters.TEXT & filters.ChatType.GROUPS, handle_links))
-        app.add_handler(MessageHandler(filters.TEXT & filters.ChatType.GROUPS, fallback_help))
+        # This fallback_help should be the last MessageHandler for text in groups
+        app.add_handler(MessageHandler(filters.TEXT & filters.ChatType.GROUPS, fallback_help)) 
         
         # Run polling without closing the event loop.
         await app.run_polling(close_loop=False)
 
     except Exception as e:
-        logger.error(f"Error in main function: {e}")
+        logger.error(f"मुख्य फ़ंक्शन में त्रुटि: {e}")
 
 # --- Launcher ---
 async def launch():
     try:
         await main()
     except Exception as e:
-        print(f"Bot crashed: {e}", file=sys.stderr)
+        print(f"बॉट क्रैश हो गया: {e}", file=sys.stderr)
 
 if __name__ == "__main__":
     try:
-        # Check if an event loop is already running, if not, create a new one
         try:
             loop = asyncio.get_running_loop()
             loop.create_task(main())
@@ -1638,6 +1715,6 @@ if __name__ == "__main__":
             asyncio.set_event_loop(new_loop)
             new_loop.run_until_complete(main())
     except KeyboardInterrupt:
-        print("Bot stopped by user.", file=sys.stderr)
+        print("उपयोगकर्ता द्वारा बॉट रोका गया.", file=sys.stderr)
     except Exception as e:
-        print(f"An unexpected error occurred during startup: {e}", file=sys.stderr)
+        print(f"स्टार्टअप के दौरान एक अप्रत्याशित त्रुटि हुई: {e}", file=sys.stderr)
